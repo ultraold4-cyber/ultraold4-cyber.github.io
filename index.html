@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Splash Arcade</title>
+    <title>Neon Splash: Level Edition</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            background: #090d16;
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -19,210 +19,373 @@
             overflow: hidden;
         }
         h1 { 
-            margin: 5px 0; 
-            font-size: 28px; 
-            background: linear-gradient(to right, #ec4899, #8b5cf6, #3b82f6);
+            margin: 5px 0 0 0; 
+            font-size: 32px; 
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #ec4899, #a855f7, #3b82f6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(139, 92, 246, 0.3); 
         }
-        #scoreBoard { 
-            font-size: 18px; 
-            margin-bottom: 10px; 
-            display: flex; 
-            gap: 20px;
+        #uiContainer {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 8px;
             font-weight: bold;
-            color: #e2e8f0;
+            font-size: 14px;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #locationDisplay {
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 5px;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+        #menuScreen {
+            position: absolute;
+            width: 320px;
+            height: 400px;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border: 2px solid #a855f7;
+        }
+        .menu-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #f43f5e;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(to right, #8b5cf6, #3b82f6);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            margin: 5px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 180px;
+            cursor: pointer;
         }
         canvas {
-            background: #020617;
-            border: 4px solid transparent;
-            border-image: linear-gradient(to bottom right, #ec4899, #3b82f6) 1;
             border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
             max-width: 100%;
         }
         .instructions { 
-            font-size: 13px; 
+            font-size: 11px; 
             color: #94a3b8; 
-            margin-top: 12px; 
+            margin-top: 10px; 
             text-align: center; 
-            background: rgba(255,255,255,0.05);
-            padding: 6px 15px;
-            border-radius: 20px;
+            max-width: 300px;
         }
     </style>
 </head>
 <body>
 
     <h1>NEON SPLASH</h1>
-    <div id="scoreBoard">
-        <div id="score" style="color: #3b82f6;">Score: 0</div>
-        <div id="highScore" style="color: #ec4899;">Best: 0</div>
+    <div id="locationDisplay">📍 LEVEL 1: CYBER CITY GRID</div>
+    
+    <div id="uiContainer">
+        <div class="stat-box" style="color: #3b82f6;">Score: <span id="score">0</span>/<span id="targetScore">5</span></div>
+        <div class="stat-box" style="color: #eab308;">🪙 Coins: <span id="coins">0</span></div>
+        <div class="stat-box" style="color: #ec4899;">Best: <span id="highScore">0</span></div>
     </div>
     
-    <canvas id="gameCanvas" width="320" height="400"></canvas>
-    <div class="instructions">Tap to bounce! Dynamic background music enabled 🎵</div>
+    <div style="position: relative;">
+        <!-- Dashboard Menu -->
+        <div id="menuScreen">
+            <div class="menu-title">SELECT LEVEL</div>
+            <button class="btn" style="background: #22c55e;" onclick="startLevel(1)">LEVEL 1 (Target: 5)</button>
+            <button class="btn" style="background: #eab308;" onclick="startLevel(2)">LEVEL 2 (Target: 10)</button>
+            <button class="btn" style="background: #ef4444;" onclick="startLevel(3)">LEVEL 3 (Target: 15)</button>
+        </div>
+        <canvas id="gameCanvas" width="320" height="400"></canvas>
+    </div>
 
-    <!-- Background Music Stream Link -->
-    <audio id="bgMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <div class="instructions">🚀 Tap with 1 finger to jump. Tap with 2 fingers to SHOOT enemies! Hit the target score to WIN the level!</div>
 
+    <audio id="bgMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const menuScreen = document.getElementById("menuScreen");
         const scoreElement = document.getElementById("score");
+        const targetScoreElement = document.getElementById("targetScore");
+        const coinsElement = document.getElementById("coins");
         const highScoreElement = document.getElementById("highScore");
+        const locationDisplay = document.getElementById("locationDisplay");
         const bgMusic = document.getElementById("bgMusic");
 
-        // Game Settings
-        const gravity = 0.25;
-        const jump = -4.8;
-        const pipeWidth = 52;
-        const pipeGap = 115;
-        const pipeSpeed = 2.2;
+        let gravity, jump, pipeSpeed, pipeGap, targetScore;
+        let birdY, birdVelocity, birdSize, birdColor;
+        let pipes = [], coins = [], particles = [], lasers = [], enemies = [];
+        let score = 0, totalCoins = 0, currentLevel = 1;
+        let isGameOver = true, frameCount = 0, levelCleared = false;
 
-        let birdY = 200;
-        let birdVelocity = 0;
-        let birdRadius = 11;
-        let pipes = [];
-        let score = 0;
-        let highScore = localStorage.getItem("splashHighScore") || 0;
-        let isGameOver = false;
-        let frameCount = 0;
-        let colorHue = 0;
+        let savedHighScore = localStorage.getItem("neonLevelHighScore") || 0;
+        highScoreElement.innerText = savedHighScore;
 
-        highScoreElement.innerText = "Best: " + highScore;
+        function startLevel(levelNum) {
+            currentLevel = levelNum;
+            levelCleared = false;
 
-        function startNewGame() {
-            birdY = 200;
-            birdVelocity = 0;
-            pipes = [];
-            score = 0;
+            // Level configuration settings
+            if (levelNum === 1) {
+                gravity = 0.20; jump = -4.2; pipeSpeed = 1.8; pipeGap = 135; targetScore = 5;
+                locationDisplay.innerText = "📍 LEVEL 1: CYBER CITY GRID";
+                locationDisplay.style.color = "#3b82f6";
+            } else if (levelNum === 2) {
+                gravity = 0.25; jump = -4.8; pipeSpeed = 2.4; pipeGap = 115; targetScore = 10;
+                locationDisplay.innerText = "📍 LEVEL 2: TOXIC ABYSS";
+                locationDisplay.style.color = "#10b981";
+            } else {
+                gravity = 0.31; jump = -5.3; pipeSpeed = 3.0; pipeGap = 100; targetScore = 15;
+                locationDisplay.innerText = "📍 LEVEL 3: SUPERNOVA HORIZON 🌌";
+                locationDisplay.style.color = "#ec4899";
+            }
+
+            birdY = 200; birdVelocity = 0; birdSize = 12; birdColor = levelNum === 1 ? "#3b82f6" : levelNum === 2 ? "#10b981" : "#ec4899";
+            pipes = []; coins = []; particles = []; lasers = []; enemies = [];
+            score = 0; totalCoins = 0; frameCount = 0;
             isGameOver = false;
-            frameCount = 0;
-            colorHue = 0;
-            scoreElement.innerText = "Score: 0";
+            
+            scoreElement.innerText = score;
+            targetScoreElement.innerText = targetScore;
+            coinsElement.innerText = totalCoins;
+            menuScreen.style.display = "none";
+
+            if (bgMusic.paused) {
+                bgMusic.volume = 0.35;
+                bgMusic.play().catch(() => {});
+            }
+
             spawnPipe();
+            requestAnimationFrame(gameLoop);
         }
 
         function spawnPipe() {
-            let minHeight = 50;
+            if (levelCleared) return;
+            let minHeight = 40;
             let maxHeight = canvas.height - pipeGap - minHeight;
             let topPipeHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+            
             pipes.push({
                 x: canvas.width,
                 top: topPipeHeight,
                 bottom: canvas.height - (topPipeHeight + pipeGap),
                 passed: false
             });
+
+            if (Math.random() < 0.5) {
+                coins.push({ x: canvas.width + 20, y: topPipeHeight + (pipeGap / 2), collected: false });
+            }
+
+            // Enemies show up more aggressively in higher levels
+            if (currentLevel > 1 && Math.random() < 0.6) {
+                enemies.push({
+                    x: canvas.width + 100,
+                    y: Math.random() * (canvas.height - 60) + 30,
+                    speed: pipeSpeed + 0.6,
+                    size: 10,
+                    hp: currentLevel === 3 ? 2 : 1
+                });
+            }
+        }
+
+        function addParticles(x, y, color, count = 8) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+                    radius: Math.random() * 3 + 1, alpha: 1, color: color
+                });
+            }
         }
 
         function gameLoop() {
+            if (isGameOver) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            colorHue = (colorHue + 0.5) % 360;
-            ctx.fillStyle = `hsl(${colorHue}, 40%, 6%)`;
+            // Level Background Colors
+            if (currentLevel === 1) ctx.fillStyle = "#090d16";
+            else if (currentLevel === 2) ctx.fillStyle = "#022c22";
+            else ctx.fillStyle = "#311042";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            birdVelocity += gravity;
-            birdY += birdVelocity;
-
-            ctx.fillStyle = `hsl(${(colorHue + 180) % 360}, 90%, 65%)`;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = ctx.fillStyle;
-            ctx.fillRect(50, birdY - birdRadius, birdRadius * 2, birdRadius * 2);
-            ctx.shadowBlur = 0; 
-
-            frameCount++;
-            if (frameCount % 90 === 0) {
-                spawnPipe();
+            if (!levelCleared) {
+                birdVelocity += gravity;
+                birdY += birdVelocity;
             }
 
+            // Draw Player Core
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = birdColor;
+            ctx.fillStyle = birdColor;
+            ctx.fillRect(50 - birdSize, birdY - birdSize, birdSize * 2, birdSize * 2);
+            ctx.restore();
+
+            frameCount++;
+            if (frameCount % 90 === 0) spawnPipe();
+
+            // Lasers Logic
+            for (let i = lasers.length - 1; i >= 0; i--) {
+                lasers[i].x += 6;
+                ctx.fillStyle = "#22c55e";
+                ctx.fillRect(lasers[i].x, lasers[i].y - 2, 12, 4);
+                if (lasers[i].x > canvas.width) lasers.splice(i, 1);
+            }
+
+            // Enemies Logic
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i]; e.x -= e.speed;
+                ctx.fillStyle = "#ef4444";
+                ctx.fillRect(e.x - e.size, e.y - e.size, e.size * 2, e.size * 2);
+
+                if (!levelCleared && Math.hypot(50 - e.x, birdY - e.y) < birdSize + e.size) {
+                    handleCrash();
+                }
+
+                for (let j = lasers.length - 1; j >= 0; j--) {
+                    let l = lasers[j];
+                    if (l.x > e.x - e.size && l.x < e.x + e.size && l.y > e.y - e.size && l.y < e.y + e.size) {
+                        e.hp--; lasers.splice(j, 1);
+                        if (e.hp <= 0) {
+                            addParticles(e.x, e.y, "#ef4444", 12);
+                            enemies.splice(i, 1);
+                            score++; scoreElement.innerText = score;
+                            checkWinCondition();
+                        }
+                        break;
+                    }
+                }
+                if (e.x + e.size < 0) enemies.splice(i, 1);
+            }
+
+            // Coins Logic
+            for (let i = coins.length - 1; i >= 0; i--) {
+                let c = coins[i]; c.x -= pipeSpeed;
+                if (!c.collected) {
+                    ctx.fillStyle = "#eab308";
+                    ctx.beginPath(); ctx.arc(c.x, c.y, 7, 0, Math.PI * 2); ctx.fill();
+
+                    if (!levelCleared && Math.hypot(50 - c.x, birdY - c.y) < birdSize + 7) {
+                        c.collected = true; totalCoins++; coinsElement.innerText = totalCoins;
+                        addParticles(c.x, c.y, "#eab308");
+                    }
+                }
+                if (c.x + 20 < 0) coins.splice(i, 1);
+            }
+
+            // Obstacles Pipes Logic
             for (let i = pipes.length - 1; i >= 0; i--) {
-                pipes[i].x -= pipeSpeed;
+                let p = pipes[i]; p.x -= pipeSpeed;
+                ctx.fillStyle = currentLevel === 1 ? "#3b82f6" : currentLevel === 2 ? "#10b981" : "#f43f5e";
+                ctx.fillRect(p.x, 0, 52, p.top);
+                ctx.fillRect(p.x, canvas.height - p.bottom, 52, p.bottom);
 
-                ctx.fillStyle = `hsl(${(colorHue + 90) % 360}, 85%, 50%)`;
-                ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].top);
-                ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom);
-
-                if (50 + birdRadius > pipes[i].x && 50 - birdRadius < pipes[i].x + pipeWidth) {
-                    if (birdY - birdRadius < pipes[i].top || birdY + birdRadius > canvas.height - pipes[i].bottom) {
-                        triggerCrash();
+                if (!levelCleared && 50 + birdSize > p.x && 50 - birdSize < p.x + 52) {
+                    if (birdY - birdSize < p.top || birdY + birdSize > canvas.height - p.bottom) {
+                        handleCrash();
                     }
                 }
 
-                if (!pipes[i].passed && pipes[i].x < 50) {
-                    pipes[i].passed = true;
-                    score++;
-                    scoreElement.innerText = "Score: " + score;
+                if (!p.passed && p.x < 50) {
+                    p.passed = true; score++; scoreElement.innerText = score;
+                    checkWinCondition();
                 }
+                if (p.x + 52 < 0) pipes.splice(i, 1);
+            }
 
-                if (pipes[i].x + pipeWidth < 0) {
-                    pipes.splice(i, 1);
+            if (!levelCleared && (birdY + birdSize >= canvas.height || birdY - birdSize <= 0)) handleCrash();
+
+            // Particles Rendering
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.alpha -= 0.02;
+                ctx.fillStyle = pt.color; ctx.globalAlpha = pt.alpha;
+                ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+                if (pt.alpha <= 0) particles.splice(i, 1);
+            }
+
+            // Level Cleared Celebration Text Loop
+            if (levelCleared) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#22c55e";
+                ctx.font = "bold 24px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(`LEVEL ${currentLevel} CLEARED! 🎉`, canvas.width / 2, canvas.height / 2);
+                
+                // Spawn persistent fireworks
+                if (Math.random() < 0.15) {
+                    addParticles(Math.random() * canvas.width, Math.random() * canvas.height, `hsl(${Math.random() * 360}, 100%, 50%)`, 15);
                 }
             }
 
-            if (birdY + birdRadius >= canvas.height || birdY - birdRadius <= 0) {
-                triggerCrash();
-            }
+            requestAnimationFrame(gameLoop);
+        }
 
-            if (!isGameOver) {
-                requestAnimationFrame(gameLoop);
+        function checkWinCondition() {
+            if (score >= targetScore && !levelCleared) {
+                levelCleared = true;
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Victory rhythmic vibration pulses
+
+                setTimeout(() => {
+                    isGameOver = true;
+                    menuScreen.style.display = "flex";
+                    let nextLvl = currentLevel < 3 ? currentLevel + 1 : 1;
+                    menuScreen.querySelector(".menu-title").innerHTML = `VICTORY! 🏆<br><span style="font-size:13px;color:#cbd5e1;">Unlock next stage below:</span>`;
+                }, 3500); // Let fireworks run for 3.5 seconds
             }
         }
 
-        function triggerCrash() {
-            if (!isGameOver) {
-                // Softened Haptic Click (20ms instead of heavy rattle)
-                if (navigator.vibrate) {
-                    navigator.vibrate(20); 
-                }
-                endGame();
-            }
-        }
-
-        function endGame() {
+        function handleCrash() {
             isGameOver = true;
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem("splashHighScore", highScore);
-                highScoreElement.innerText = "Best: " + highScore;
+            if (navigator.vibrate) navigator.vibrate(20);
+            if (score > savedHighScore) {
+                savedHighScore = score;
+                localStorage.setItem("neonLevelHighScore", savedHighScore);
+                highScoreElement.innerText = savedHighScore;
             }
-            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 26px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
-            ctx.font = "14px sans-serif";
-            ctx.fillStyle = "#cbd5e1";
-            ctx.fillText("Tap anywhere to bounce again", canvas.width / 2, canvas.height / 2 + 20);
+            menuScreen.style.display = "flex";
+            menuScreen.querySelector(".menu-title").innerHTML = `GAME OVER<br><span style="font-size:14px;color:#cbd5e1;">Final Score: ${score}</span>`;
         }
 
-        function handleInput(e) {
-            e.preventDefault();
-            
-            // Modern browsers require user interaction before playing audio strings
-            if (bgMusic.paused) {
-                bgMusic.volume = 0.4; // Soft background volume balance
-                bgMusic.play().catch(err => console.log("Audio waiting for touch activation"));
-            }
-            
-            if (isGameOver) {
-                startNewGame();
-                requestAnimationFrame(gameLoop);
+        function handleAction(e) {
+            if (isGameOver || levelCleared) return;
+            if (e.touches && e.touches.length > 1) {
+                e.preventDefault();
+                lasers.push({ x: 55, y: birdY });
             } else {
                 birdVelocity = jump;
             }
         }
 
-        canvas.addEventListener("touchstart", handleInput);
-        canvas.addEventListener("mousedown", handleInput);
-
-        startNewGame();
-        requestAnimationFrame(gameLoop);
+        window.addEventListener("touchstart", handleAction, { passive: false });
+        window.addEventListener("mousedown", (e) => {
+            if (isGameOver || levelCleared) return;
+            if (e.button === 2) lasers.push({ x: 55, y: birdY });
+            else birdVelocity = jump;
+        });
+        window.addEventListener("contextmenu", e => e.preventDefault());
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" && !isGameOver && !levelCleared) lasers.push({ x: 55, y: birdY });
+        });
     </script>
 </body>
 </html>
