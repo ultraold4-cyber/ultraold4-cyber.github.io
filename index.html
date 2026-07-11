@@ -48,6 +48,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(9, 9, 11, 0.96); display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 10; padding: 30px; text-align: center;
+            cursor: pointer;
         }
         .menu-title {
             font-size: 34px; font-weight: 900; margin-bottom: 4px;
@@ -62,30 +63,25 @@
             letter-spacing: 1px; width: 240px; margin: 8px 0;
             box-shadow: 0 4px 20px rgba(239,68,68,0.3); transform: scale(1);
             animation: pulseGlow 2s infinite ease-in-out;
+            pointer-events: none; /* Let the parent layout capture the tap directly */
         }
         @keyframes pulseGlow {
             0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(239,68,68,0.3); }
             50% { transform: scale(1.03); box-shadow: 0 4px 25px rgba(239,68,68,0.6); }
-        }
-        .guide-box {
-            text-align: left; font-size: 13px; color: #cbd5e1; line-height: 1.6;
-            margin: 15px 0; display: flex; flex-direction: column; gap: 12px;
-            background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
         }
     </style>
 </head>
 <body>
 
     <div id="gameContainer">
-        <!-- MAIN LOBBY MENU (Switched to direct touch listeners) -->
-        <div id="lobbyScreen" class="screen-overlay" ontouchstart="actions.startInGame(event)" mousedown="actions.startInGame(event)">
+        <!-- MAIN LOBBY MENU -->
+        <div id="lobbyScreen" class="screen-overlay">
             <div class="menu-title" id="mainTitle">CRIMSON REBEL</div>
             <div class="menu-sub">AETHER AWAKENING</div>
             
             <div class="tap-zone">TAP TO ENTER BATTLE</div>
             
-            <div style="font-size: 11px; color: #64748b; margin-top: 30px; letter-spacing: 1px;">
+            <div style="font-size: 11px; color: #64748b; margin-top: 30px; letter-spacing: 1px; pointer-events: none;">
                 💡 Survived levels build the musical synth theme.<br>Getting defeated silences the arena instantly.
             </div>
         </div>
@@ -143,14 +139,11 @@
                 this.intervalId = setInterval(() => {
                     if(state.isGameOver) return;
                     
-                    // Layer 1: Core Emotional Intro
                     this.playTone(melody[step % melody.length], 'sine', 0.6, 0.12);
                     
-                    // Layer 2: Triggers automatically during combat progression
                     if (state.score >= 3 || state.currentLevel > 1) {
                         this.playTone(harmonies[(step + 2) % harmonies.length], 'triangle', 0.5, 0.06);
                     }
-                    // Layer 3: Night phase sub-bass sequence
                     if (state.currentLevel >= 3) {
                         this.playTone(melody[step % melody.length] / 2, 'sine', 0.7, 0.15);
                     }
@@ -221,13 +214,16 @@
             }
         };
 
-        // MATHEMATION VECTOR RENDER SYSTEM FOR RAGNA SILHOUETTE HERO
+        // BINDING EVENT LISTENERS SECURELY AFTER INITIALIZATION
+        const lobby = document.getElementById("lobbyScreen");
+        lobby.addEventListener("touchstart", (e) => actions.startInGame(e), { passive: false });
+        lobby.addEventListener("mousedown", (e) => actions.startInGame(e));
+
         function drawAnimeHero(ctx, x, y, radius, charge) {
             ctx.save();
             ctx.shadowBlur = 12 + Math.sin(state.frame * 0.1) * 4;
             ctx.shadowColor = "#ef4444";
 
-            // Crimson coat layout lines
             ctx.fillStyle = "#991b1b";
             ctx.beginPath();
             ctx.moveTo(x - radius * 0.6, y + radius * 0.2);
@@ -247,7 +243,6 @@
             ctx.fillStyle = "#171717";
             ctx.fillRect(x - radius*0.2, y - radius*0.3, radius*0.4, radius*0.7);
 
-            // Spiky white hair vectors
             ctx.fillStyle = "#f8fafc";
             for(let i = -3; i <= 3; i++) {
                 let hairLength = radius * (0.8 + Math.abs(i)*0.1);
@@ -258,7 +253,6 @@
                 ctx.closePath(); ctx.fill();
             }
 
-            // Greatsword positioning
             ctx.save();
             ctx.translate(x + radius * 1.2, y - radius * 0.2 + Math.sin(state.frame*0.08)*2);
             ctx.rotate(-Math.PI / 4);
@@ -276,7 +270,6 @@
             ctx.restore();
         }
 
-        // DARK FANTASY ANIME MONSTER CARAPACE GENERATOR
         function drawAnimeMonster(ctx, x, y, size, frame, isBoss=false) {
             ctx.save();
             ctx.shadowBlur = isBoss ? 25 : 12;
@@ -295,11 +288,9 @@
             ctx.lineTo(x - size * 1.3, y + size);
             ctx.closePath(); ctx.fill();
 
-            // Threatening mouth lines
             ctx.fillStyle = "#111827";
             ctx.beginPath(); ctx.ellipse(x, y + size * 0.3, size * 0.8, size * 0.4, 0, 0, Math.PI * 2); ctx.fill();
 
-            // Jaw fangs
             ctx.fillStyle = "#f8fafc";
             let toothWidth = (size * 1.6) / 8;
             for(let i = 0; i < 8; i++) {
@@ -312,7 +303,6 @@
                 ctx.closePath(); ctx.fill();
             }
 
-            // Glowing Ocular System
             ctx.fillStyle = "#eab308";
             if (isBoss) {
                 ctx.fillStyle = "#ef4444";
@@ -407,4 +397,14 @@
 
             for(let i = entities.enemies.length - 1; i >= 0; i--) {
                 let e = entities.enemies[i]; e.y += e.speed;
-                drawAnimeMonster(ctx, e.x, e.y, e.size, state.frame,
+                drawAnimeMonster(ctx, e.x, e.y, e.size, state.frame, false);
+                if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.size) executeGameOver();
+                if (e.y > state.height + 40) entities.enemies.splice(i, 1);
+            }
+
+            if (entities.activeBoss) {
+                let b = entities.activeBoss;
+                b.x += (b.targetX - b.x) * 0.04; b.y += (b.targetY - b.y) * 0.04;
+                if (state.frame % 80 === 0) {
+                    b.targetX = Math.random() * (state.width - 100) + 50;
+                    b.targetY = Math.random() * 100 + 70
