@@ -62,7 +62,7 @@
     </div>
     
     <canvas id="gameCanvas" width="320" height="400"></canvas>
-    <div class="instructions">Tap the screen to bounce! Make sure your volume is turned up! 🔊</div>
+    <div class="instructions">Tap to bounce! Create a melody with your jumps! 🎵</div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
@@ -70,42 +70,81 @@
         const scoreElement = document.getElementById("score");
         const highScoreElement = document.getElementById("highScore");
 
-        // Web Audio Context initialization
+        // Web Audio Context
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
-        // System Generated Audio Synthesizers
-        function playSound(frequency, type, duration) {
+        // Musical scales for tap melody (Pentatonic scale sounds beautiful in sequence)
+        const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; 
+        let noteIndex = 0;
+
+        function playMelodyNote() {
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            
+            // Cycle through musical notes to create a running melody
+            const frequency = notes[noteIndex];
+            noteIndex = (noteIndex + 1) % notes.length;
+
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            osc.type = type;
+            // 'triangle' waves sound softer, warmer, and more musical than harsh square/sine waves
+            osc.type = 'triangle'; 
             osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
             
-            // Linear decay for smooth audio fade out
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            // Fast attack, smooth musical decay
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
             
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             
             osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function playJumpSound() {
-            playSound(400, 'sine', 0.1);
+            osc.stop(audioCtx.currentTime + 0.15);
         }
 
         function playScoreSound() {
-            playSound(600, 'square', 0.08);
+            // A crisp, pleasant harmonized chime chord when passing obstacles
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            });
         }
 
         function playCrashSound() {
-            playSound(120, 'sawtooth', 0.4);
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+            // Sliding the pitch down softly to mean "fail" without sounding ugly
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Softened Haptic Vibration 
+        function triggerSoftVibration() {
+            if (navigator.vibrate) {
+                // Modified from a heavy buzz to a tiny, elegant 25ms micro-pulse
+                navigator.vibrate(25); 
+            }
         }
 
         // Game Settings
@@ -123,7 +162,7 @@
         let highScore = localStorage.getItem("splashHighScore") || 0;
         let isGameOver = false;
         let frameCount = 0;
-        let colorHue = 0; // Dynamic tracking for color shifts
+        let colorHue = 0;
 
         highScoreElement.innerText = "Best: " + highScore;
 
@@ -135,6 +174,7 @@
             isGameOver = false;
             frameCount = 0;
             colorHue = 0;
+            noteIndex = 0; // Reset music track sequence
             scoreElement.innerText = "Score: 0";
             spawnPipe();
         }
@@ -154,23 +194,19 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Dynamic Background - Shifts gently color-by-color through code execution loops
             colorHue = (colorHue + 0.5) % 360;
             ctx.fillStyle = `hsl(${colorHue}, 40%, 6%)`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Movement Physics
             birdVelocity += gravity;
             birdY += birdVelocity;
 
-            // Draw Colorful Player Block (Shifts color dynamically based on movement angle)
             ctx.fillStyle = `hsl(${(colorHue + 180) % 360}, 90%, 65%)`;
             ctx.shadowBlur = 15;
             ctx.shadowColor = ctx.fillStyle;
             ctx.fillRect(50, birdY - birdRadius, birdRadius * 2, birdRadius * 2);
             ctx.shadowBlur = 0; 
 
-            // Track Obstacles
             frameCount++;
             if (frameCount % 90 === 0) {
                 spawnPipe();
@@ -179,19 +215,16 @@
             for (let i = pipes.length - 1; i >= 0; i--) {
                 pipes[i].x -= pipeSpeed;
 
-                // Draw Bright Vibrant Multi-Color Obstacles
                 ctx.fillStyle = `hsl(${(colorHue + 90) % 360}, 85%, 50%)`;
                 ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].top);
                 ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom);
 
-                // Precise Core Collision Engine
                 if (50 + birdRadius > pipes[i].x && 50 - birdRadius < pipes[i].x + pipeWidth) {
                     if (birdY - birdRadius < pipes[i].top || birdY + birdRadius > canvas.height - pipes[i].bottom) {
                         triggerCrash();
                     }
                 }
 
-                // Score Checker
                 if (!pipes[i].passed && pipes[i].x < 50) {
                     pipes[i].passed = true;
                     score++;
@@ -204,7 +237,6 @@
                 }
             }
 
-            // Boundary Floor/Ceiling check
             if (birdY + birdRadius >= canvas.height || birdY - birdRadius <= 0) {
                 triggerCrash();
             }
@@ -217,6 +249,7 @@
         function triggerCrash() {
             if (!isGameOver) {
                 playCrashSound();
+                triggerSoftVibration();
                 endGame();
             }
         }
@@ -237,12 +270,11 @@
             ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
             ctx.font = "14px sans-serif";
             ctx.fillStyle = "#cbd5e1";
-            ctx.fillText("Tap anywhere to bounce again", canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText("Tap anywhere to play melody again", canvas.width / 2, canvas.height / 2 + 20);
         }
 
         function handleInput(e) {
             e.preventDefault();
-            // Resumes audio context if modern phone browser blocks autoplay
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
@@ -252,7 +284,7 @@
                 requestAnimationFrame(gameLoop);
             } else {
                 birdVelocity = jump;
-                playJumpSound();
+                playMelodyNote();
             }
         }
 
