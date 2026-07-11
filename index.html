@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Splash Flapper</title>
+    <title>Neon Splash Arcade</title>
     <style>
         body {
             margin: 0;
@@ -62,90 +62,17 @@
     </div>
     
     <canvas id="gameCanvas" width="320" height="400"></canvas>
-    <div class="instructions">Tap to bounce! Create a melody with your jumps! 🎵</div>
+    <div class="instructions">Tap to bounce! Dynamic background music enabled 🎵</div>
+
+    <!-- Background Music Stream Link -->
+    <audio id="bgMusic" loop src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3"></audio>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreElement = document.getElementById("score");
         const highScoreElement = document.getElementById("highScore");
-
-        // Web Audio Context
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
-
-        // Musical scales for tap melody (Pentatonic scale sounds beautiful in sequence)
-        const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; 
-        let noteIndex = 0;
-
-        function playMelodyNote() {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
-            // Cycle through musical notes to create a running melody
-            const frequency = notes[noteIndex];
-            noteIndex = (noteIndex + 1) % notes.length;
-
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            // 'triangle' waves sound softer, warmer, and more musical than harsh square/sine waves
-            osc.type = 'triangle'; 
-            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-            
-            // Fast attack, smooth musical decay
-            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
-        }
-
-        function playScoreSound() {
-            // A crisp, pleasant harmonized chime chord when passing obstacles
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            [523.25, 659.25, 783.99].forEach((freq, idx) => {
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
-            });
-        }
-
-        function playCrashSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-            // Sliding the pitch down softly to mean "fail" without sounding ugly
-            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3);
-            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        // Softened Haptic Vibration 
-        function triggerSoftVibration() {
-            if (navigator.vibrate) {
-                // Modified from a heavy buzz to a tiny, elegant 25ms micro-pulse
-                navigator.vibrate(25); 
-            }
-        }
+        const bgMusic = document.getElementById("bgMusic");
 
         // Game Settings
         const gravity = 0.25;
@@ -174,7 +101,6 @@
             isGameOver = false;
             frameCount = 0;
             colorHue = 0;
-            noteIndex = 0; // Reset music track sequence
             scoreElement.innerText = "Score: 0";
             spawnPipe();
         }
@@ -229,7 +155,6 @@
                     pipes[i].passed = true;
                     score++;
                     scoreElement.innerText = "Score: " + score;
-                    playScoreSound();
                 }
 
                 if (pipes[i].x + pipeWidth < 0) {
@@ -248,8 +173,10 @@
 
         function triggerCrash() {
             if (!isGameOver) {
-                playCrashSound();
-                triggerSoftVibration();
+                // Softened Haptic Click (20ms instead of heavy rattle)
+                if (navigator.vibrate) {
+                    navigator.vibrate(20); 
+                }
                 endGame();
             }
         }
@@ -270,13 +197,16 @@
             ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
             ctx.font = "14px sans-serif";
             ctx.fillStyle = "#cbd5e1";
-            ctx.fillText("Tap anywhere to play melody again", canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText("Tap anywhere to bounce again", canvas.width / 2, canvas.height / 2 + 20);
         }
 
         function handleInput(e) {
             e.preventDefault();
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+            
+            // Modern browsers require user interaction before playing audio strings
+            if (bgMusic.paused) {
+                bgMusic.volume = 0.4; // Soft background volume balance
+                bgMusic.play().catch(err => console.log("Audio waiting for touch activation"));
             }
             
             if (isGameOver) {
@@ -284,7 +214,6 @@
                 requestAnimationFrame(gameLoop);
             } else {
                 birdVelocity = jump;
-                playMelodyNote();
             }
         }
 
