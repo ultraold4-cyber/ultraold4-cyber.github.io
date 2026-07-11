@@ -2,330 +2,392 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sky Strike: Horizons</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Aether Blade: Crimson Awakening</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        body, html {
             margin: 0; padding: 0;
-            background: #0c4a6e; color: white;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            min-height: 100vh; overflow: hidden;
-            user-select: none; -webkit-user-select: none;
+            width: 100%; height: 100%;
+            background: #020617; color: #f8fafc;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden; position: fixed; touch-action: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        h1 {
-            margin: 5px 0; font-size: 28px; font-weight: 900;
-            background: linear-gradient(to right, #0ea5e9, #bae6fd);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        #gameContainer {
+            position: relative; width: 100%; max-width: 450px; height: 100%; max-height: 850px;
+            background: #000; box-shadow: 0 0 50px rgba(239, 68, 68, 0.15); overflow: hidden;
         }
-        #uiContainer { display: flex; gap: 10px; margin-bottom: 5px; font-size: 13px; }
-        .stat-box { background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 8px; font-weight: bold; }
-        #gameWrapper { position: relative; width: 320px; height: 440px; }
-        canvas { background: linear-gradient(to bottom, #bae6fd, #38bdf8, #0ea5e9); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .menu {
+        canvas { display: block; width: 100%; height: 100%; background: transparent; }
+        .ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.9); border-radius: 12px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;
+            pointer-events: none; display: flex; flex-direction: column;
+            justify-content: space-between; padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px) 20px; z-index: 5;
         }
+        .top-hud { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .hud-card {
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 14px; border-radius: 12px;
+            font-weight: 900; font-size: 13px; letter-spacing: 1px; color: #f43f5e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 6px;
+        }
+        .boss-bar-container {
+            width: 100%; background: rgba(0,0,0,0.7); border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 6px; height: 10px; overflow: hidden; margin-top: 6px; display: none;
+        }
+        .boss-bar {
+            width: 100%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626);
+            transition: width 0.1s ease-out; box-shadow: 0 0 10px #ef4444;
+        }
+        .screen-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(9, 9, 11, 0.96); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10; padding: 30px; text-align: center; pointer-events: auto;
+        }
+        .menu-title {
+            font-size: 34px; font-weight: 900; margin-bottom: 4px;
+            background: linear-gradient(135deg, #ef4444, #f43f5e, #a855f7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 2px; filter: drop-shadow(0 0 15px rgba(239,68,68,0.3));
+        }
+        .menu-sub { font-size: 11px; color: #94a3b8; margin-bottom: 25px; letter-spacing: 3px; font-weight: bold; }
         .btn {
-            background: linear-gradient(to right, #0284c7, #0ea5e9); border: none; color: white;
-            padding: 8px 16px; margin: 5px; border-radius: 8px; font-weight: bold; width: 180px; cursor: pointer;
+            background: linear-gradient(135deg, #ef4444, #ba1a1a); border: none; color: white;
+            padding: 14px 32px; border-radius: 14px; font-weight: 900; font-size: 15px;
+            letter-spacing: 1px; cursor: pointer; width: 220px; margin: 8px 0;
+            box-shadow: 0 4px 20px rgba(239,68,68,0.3); transition: transform 0.1s, filter 0.2s; pointer-events: auto;
         }
-        .shop-grid { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; width: 80%; }
-        .shop-item {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.1); padding: 6px; border-radius: 6px; font-size: 11px;
+        .btn:active { transform: scale(0.96); filter: brightness(1.2); }
+        .guide-box {
+            text-align: left; font-size: 13px; color: #cbd5e1; line-height: 1.6;
+            margin: 15px 0; display: flex; flex-direction: column; gap: 12px;
+            background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .shop-btn { background: #eab308; border: none; color: black; padding: 3px 8px; font-weight: bold; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>SKY STRIKE</h1>
-    <div id="uiContainer">
-        <div class="stat-box" style="color: #bae6fd;">Lvl: <span id="uiLevel">1</span></div>
-        <div class="stat-box" style="color: #eab308;">🪙 <span id="uiCoins">0</span></div>
-        <div class="stat-box" style="color: #f43f5e;">Boss HP: <span id="uiBossHp">0</span></div>
-    </div>
-
-    <div id="gameWrapper">
-        <!-- Main Dashboard Menu -->
-        <div id="mainMenu" class="menu">
-            <h2 style="color: #0ea5e9; margin-bottom: 5px;">SKY HORIZONS</h2>
-            <p style="font-size: 11px; color: #cbd5e1; margin-bottom: 15px;">Drag anywhere on canvas to move freely!</p>
-            <button class="btn" onclick="startNewGame()">LAUNCH MISSION</button>
-            <button class="btn" style="background: #475569;" onclick="openShop()">🛍️ SKIN COUTURE SHOP</button>
+    <div id="gameContainer">
+        <!-- GAME LOBBY MAIN MENU -->
+        <div id="lobbyScreen" class="screen-overlay">
+            <div class="menu-title" id="mainTitle">CRIMSON REBEL</div>
+            <div class="menu-sub">AETHER AWAKENING</div>
+            <button class="btn" onclick="actions.startInGame()">ENTER BATTLE</button>
+            <button class="btn" style="background: rgba(30, 41, 59, 0.8); box-shadow: none; border: 1px solid rgba(255,255,255,0.1); font-size:13px; width:180px; padding:10px;" onclick="actions.openGuide()">📖 SYSTEM MANUAL</button>
         </div>
 
-        <!-- Skin Shop Menu -->
-        <div id="shopMenu" class="menu" style="display: none;">
-            <h3 style="color: #eab308; margin-top: 0;">SKIN COUTURE SHOP</h3>
-            <div class="shop-grid">
-                <div class="shop-item">
-                    <span>🔷 Neo Core (Standard)</span>
-                    <button class="shop-btn" style="background:#64748b;" onclick="equipSkin('classic', 0)">EQUIP</button>
-                </div>
-                <div class="shop-item">
-                    <span>🔥 Solar Flare (+10% Fire Rate)</span>
-                    <button id="btnSkin1" class="shop-btn" onclick="equipSkin('solar', 15)">Buy 15🪙</button>
-                </div>
-                <div class="shop-item">
-                    <span>🛸 Chrono Void (Double Damage)</span>
-                    <button id="btnSkin2" class="shop-btn" onclick="equipSkin('void', 30)">Buy 30🪙</button>
+        <!-- MANUAL GUIDE -->
+        <div id="guideScreen" class="screen-overlay" style="display: none;">
+            <div class="menu-title" style="font-size:24px;">SYSTEM MANUAL</div>
+            <div class="guide-box">
+                <div>🌌 <strong>ATMOSPHERE FLOW:</strong> Watch the setting shift beautifully from <strong>Cool Noon</strong> (Lvl 1), to <strong>Crimson Sunset</strong> (Lvl 2), and finally <strong>Beautiful Night</strong> (Lvl 3).</div>
+                <div>🎵 <strong>MELODIC PENALTY:</strong> The background music is an emotional, evolving harmony. Defeat monsters to layer the song! **If you get knocked out, the music drops dead silent instantly.**</div>
+                <div>⚔️ <strong>CRIMSON FIGHTER:</strong> Drag your finger anywhere to glide seamlessly. Hold your touch down to build spiritual focus, then release to execute your massive blade wave attack.</div>
+            </div>
+            <button class="btn" style="background:#475569; box-shadow:none;" onclick="actions.closeGuide()">UNDERSTOOD</button>
+        </div>
+
+        <!-- HEADS UP DISPLAY -->
+        <div class="ui-layer">
+            <div class="top-hud">
+                <div class="hud-card" id="hudLevelBox" style="color: #f43f5e;">⚡ LVL <span id="hudLevel">1</span></div>
+                <div class="hud-card" style="color: #eab308;">🪙 <span id="hudCoins">0</span></div>
+            </div>
+            
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div id="bossLabel" style="font-size:11px; font-weight:900; color:#ef4444; letter-spacing:2px; display:none; margin-bottom: 2px;">APEX CALAMITY MONSTER DETECTED</div>
+                <div class="boss-bar-container" id="bossBarWrap">
+                    <div class="boss-bar" id="bossBar"></div>
                 </div>
             </div>
-            <button class="btn" style="background: #dc2626;" onclick="closeShop()">BACK TO MENU</button>
         </div>
 
-        <canvas id="gameCanvas" width="320" height="440"></canvas>
+        <canvas id="canvas"></canvas>
     </div>
-
-    <div style="font-size:11px; color:#bae6fd; margin-top:8px; text-align:center; max-width:300px;">
-        💡 <strong>Controls:</strong> Drag your finger anywhere to glide smoothly. <strong>Hold down your touch</strong> to charge your Super Laser beam attack!
-    </div>
-
-    <!-- Royalty free trending epic electro wave link -->
-    <audio id="bgMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"></audio>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
+        // PROCEDURAL AUDIO SYNTHESIZER ENGINE
+        const AudioEngine = {
+            ctx: null,
+            intervalId: null,
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.startMusic();
+            },
+            playTone(freq, type, duration, vol=0.1) {
+                if(!this.ctx || state.isGameOver) return;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = type; osc.frequency.value = freq;
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
+            },
+            startMusic() {
+                if (this.intervalId) clearInterval(this.intervalId);
+                // An emotional, peaceful piano-inspired minor key cadence (Ragna theme vibe)
+                let melody = [220.00, 261.63, 293.66, 329.63, 261.63, 220.00, 196.00, 220.00];
+                let harmonies = [329.63, 392.00, 440.00, 523.25, 392.00, 329.63, 293.66, 329.63];
+                let step = 0;
+
+                this.intervalId = setInterval(() => {
+                    if(state.isGameOver) return;
+                    
+                    // Base Layer: Always plays (Peaceful Intro Hook)
+                    this.playTone(melody[step % melody.length], 'sine', 0.6, 0.12);
+                    
+                    // Dynamic Layering: Builds up if player has killed monsters / progressed to higher levels
+                    if (state.score >= 3 || state.currentLevel > 1) {
+                        this.playTone(harmonies[(step + 2) % harmonies.length], 'triangle', 0.5, 0.06);
+                    }
+                    if (state.currentLevel >= 3) {
+                        // Deeper structural floor bass drop for the night cycle
+                        this.playTone(melody[step % melody.length] / 2, 'sine', 0.7, 0.15);
+                    }
+                    step++;
+                }, 500);
+            },
+            stopMusic() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+            }
+        };
+
+        const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
-        const mainMenu = document.getElementById("mainMenu");
-        const shopMenu = document.getElementById("shopMenu");
         
-        // UI Nodes
-        const uiLevel = document.getElementById("uiLevel");
-        const uiCoins = document.getElementById("uiCoins");
-        const uiBossHp = document.getElementById("uiBossHp");
-        const bgMusic = document.getElementById("bgMusic");
+        let state = {
+            isGameOver: true, score: 0, coins: parseInt(localStorage.getItem("rebel_coins")) || 0,
+            currentLevel: 1, width: 320, height: 550, frame: 0, touchActive: false, chargeTime: 0
+        };
 
-        let player = { x: 50, y: 220, size: 12, targetY: 220, activeSkin: 'classic', fireCooldown: 0, charge: 0 };
-        let coinsWallet = parseInt(localStorage.getItem("skyCoins")) || 0;
-        let ownedSkins = JSON.parse(localStorage.getItem("skyOwnedSkins")) || ['classic'];
-        
-        let enemies = [], lasers = [], coins = [], clouds = [], particles = [];
-        let gameLevel = 1, score = 0, isGameOver = true, frameCount = 0;
-        let boss = null, isPointerDown = false;
+        let player = { x: 160, y: 450, targetX: 160, targetY: 450, radius: 18, fireCooldown: 0 };
+        let entities = { playerLasers: [], enemyLasers: [], enemies: [], currency: [], environment: [], particles: [], activeBoss: null };
 
-        uiCoins.innerText = coinsWallet;
-
-        // Initialize Cloud Background Matrix
-        for(let i=0; i<5; i++) {
-            clouds.push({ x: Math.random()*320, y: Math.random()*250, speed: Math.random()*0.5 + 0.2, size: Math.random()*30 + 20 });
+        // Generate environment stardust background layout particles
+        for(let i=0; i<35; i++) {
+            entities.environment.push({ x: Math.random()*450, y: Math.random()*850, speed: Math.random()*1.2 + 0.6, r: Math.random()*1.5 + 0.5 });
         }
 
-        function updateShopButtons() {
-            if(ownedSkins.includes('solar')) document.getElementById("btnSkin1").innerText = "EQUIP";
-            if(ownedSkins.includes('void')) document.getElementById("btnSkin2").innerText = "EQUIP";
+        function resizeContainer() {
+            const rect = canvas.parentNode.getBoundingClientRect();
+            canvas.width = rect.width; canvas.height = rect.height;
+            state.width = canvas.width; state.height = canvas.height;
         }
+        window.addEventListener("resize", resizeContainer);
+        resizeContainer();
 
-        function openShop() { mainMenu.style.display="none"; shopMenu.style.display="flex"; updateShopButtons(); }
-        function closeShop() { shopMenu.style.display="none"; mainMenu.style.display="flex"; }
-
-        function equipSkin(skinId, cost) {
-            if (!ownedSkins.includes(skinId)) {
-                if (coinsWallet >= cost) {
-                    coinsWallet -= cost;
-                    localStorage.setItem("skyCoins", coinsWallet);
-                    uiCoins.innerText = coinsWallet;
-                    ownedSkins.push(skinId);
-                    localStorage.setItem("skyOwnedSkins", JSON.stringify(ownedSkins));
-                    updateShopButtons();
-                } else { alert("Not enough coins!"); return; }
+        const actions = {
+            startInGame() {
+                AudioEngine.init();
+                state.isGameOver = false;
+                entities.enemies = []; entities.playerLasers = []; entities.enemyLasers = []; entities.currency = []; entities.activeBoss = null;
+                state.score = 0; state.currentLevel = 1; state.frame = 0; state.chargeTime = 0;
+                player.x = state.width / 2; player.y = state.height * 0.75;
+                player.targetX = player.x; player.targetY = player.y;
+                
+                document.getElementById("lobbyScreen").style.display = "none";
+                document.getElementById("bossLabel").style.display = "none";
+                document.getElementById("bossBarWrap").style.display = "none";
+                this.syncHUD();
+                AudioEngine.startMusic();
+                requestAnimationFrame(engineLoop);
+            },
+            openGuide() { document.getElementById("guideScreen").style.display = "flex"; },
+            closeGuide() { document.getElementById("guideScreen").style.display = "none"; },
+            syncHUD() {
+                document.getElementById("hudLevel").innerText = state.currentLevel;
+                document.getElementById("hudCoins").innerText = state.coins;
+                
+                let box = document.getElementById("hudLevelBox");
+                if(state.currentLevel === 1) { box.style.color = "#38bdf8"; box.innerText = "⚡ NOON"; }
+                else if(state.currentLevel === 2) { box.style.color = "#f97316"; box.innerText = "🌅 DUSK"; }
+                else { box.style.color = "#a855f7"; box.innerText = "🌌 NIGHT"; }
             }
-            player.activeSkin = skinId;
-            alert(`Skin changed to ${skinId.toUpperCase()}!`);
-        }
+        };
 
-        function startNewGame() {
-            enemies = []; lasers = []; coins = []; particles = [];
-            score = 0; gameLevel = 1; boss = null; frameCount = 0;
-            player.x = 50; player.y = 220; player.targetY = 220; player.charge = 0;
-            isGameOver = false;
-            mainMenu.style.display = "none";
-            uiLevel.innerText = gameLevel;
-            uiBossHp.innerText = "None";
+        // MATHEMATION VECTOR RENDER SYSTEM FOR RAGNA SILHOUETTE HERO
+        function drawAnimeHero(ctx, x, y, radius, charge) {
+            ctx.save();
+            ctx.shadowBlur = 12 + Math.sin(state.frame * 0.1) * 4;
+            ctx.shadowColor = "#ef4444";
 
-            if (bgMusic.paused) { bgMusic.volume = 0.4; bgMusic.play().catch(()=>{}); }
-            requestAnimationFrame(gameLoop);
-        }
+            // 1. Draw flowing long crimson coat tails
+            ctx.fillStyle = "#991b1b";
+            ctx.beginPath();
+            ctx.moveTo(x - radius * 0.6, y + radius * 0.2);
+            ctx.lineTo(x - radius * 1.3, y + radius * 1.6 + Math.sin(state.frame*0.15)*3);
+            ctx.lineTo(x, y + radius * 0.8);
+            ctx.lineTo(x + radius * 1.3, y + radius * 1.6 + Math.cos(state.frame*0.15)*3);
+            ctx.lineTo(x + radius * 0.6, y + radius * 0.2);
+            ctx.closePath();
+            ctx.fill();
 
-        function spawnBoss() {
-            boss = {
-                x: 240, y: 150, targetY: 200, size: 28,
-                hp: gameLevel * 30, maxHp: gameLevel * 30,
-                attackTimer: 0, hoverDir: 1
-            };
-            uiBossHp.innerText = boss.hp;
-        }
+            // 2. Main combat body chassis (Red high-collar coat framework)
+            ctx.fillStyle = "#dc2626";
+            ctx.beginPath();
+            ctx.moveTo(x, y - radius * 0.9);
+            ctx.lineTo(x + radius * 0.7, y + radius * 0.4);
+            ctx.lineTo(x - radius * 0.7, y + radius * 0.4);
+            ctx.closePath();
+            ctx.fill();
 
-        function addParticles(x, y, color, count=6) {
-            for(let i=0; i<count; i++) {
-                particles.push({ x, y, vx:(Math.random()-0.5)*5, vy:(Math.random()-0.5)*5, radius:Math.random()*3+1, alpha:1, color });
-            }
-        }
+            // Black inner tactical gear lines
+            ctx.fillStyle = "#171717";
+            ctx.fillRect(x - radius*0.2, y - radius*0.3, radius*0.4, radius*0.7);
 
-        function gameLoop() {
-            if (isGameOver) return;
-            frameCount++;
-
-            // 1. Draw Reality Sky Gradient and Clouds
-            let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            grad.addColorStop(0, "#e0f2fe"); grad.addColorStop(0.5, "#7dd3fc"); grad.addColorStop(1, "#0284c7");
-            ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            clouds.forEach(c => {
-                c.x -= c.speed;
-                ctx.fillStyle = "rgba(255,255,255,0.6)";
-                ctx.beginPath(); ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(c.x+c.size*0.5, c.y-c.size*0.2, c.size*0.7, 0, Math.PI*2); ctx.fill();
-                if(c.x + c.size*2 < 0) c.x = canvas.width + 50;
-            });
-
-            // 2. Free Roaming Player Physics
-            player.y += (player.targetY - player.y) * 0.15; // Smooth interpolation slide
-
-            // Charge Super Attack Mechanics
-            if (isPointerDown) {
-                player.charge = Math.min(player.charge + 1.5, 100);
-                // Draw charging power ring indicators
-                ctx.strokeStyle = `rgba(254, 240, 138, ${player.charge/100})`;
-                ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(player.x, player.y, player.size + (100 - player.charge)*0.3, 0, Math.PI*2); ctx.stroke();
+            // 3. Spiky white hero hair matrix crown
+            ctx.fillStyle = "#f8fafc";
+            for(let i = -3; i <= 3; i++) {
+                let hairLength = radius * (0.8 + Math.abs(i)*0.1);
+                ctx.beginPath();
+                ctx.moveTo(x + (i * radius * 0.25), y - radius * 0.7);
+                ctx.lineTo(x + (i * radius * 0.35) + radius*0.1, y - radius * 0.7 - hairLength);
+                ctx.lineTo(x + (i * radius * 0.25) + radius * 0.2, y - radius * 0.6);
+                ctx.closePath();
+                ctx.fill();
             }
 
-            // Draw player customized skins
-            ctx.save(); ctx.shadowBlur = 10;
-            if (player.activeSkin === 'classic') { player.birdColor = "#3b82f6"; }
-            else if (player.activeSkin === 'solar') { player.birdColor = "#ea580c"; }
-            else { player.birdColor = "#a855f7"; }
-            ctx.fillStyle = player.birdColor; ctx.shadowColor = player.birdColor;
-            ctx.beginPath(); ctx.arc(player.x, player.y, player.size, 0, Math.PI*2); ctx.fill();
+            // 4. Floating Massive Sword Blade attachment
+            ctx.save();
+            ctx.translate(x + radius * 1.2, y - radius * 0.2 + Math.sin(state.frame*0.08)*2);
+            ctx.rotate(-Math.PI / 4);
+            ctx.fillStyle = "#262626"; // Blade spine
+            ctx.fillRect(-3, -22, 6, 26);
+            ctx.fillStyle = "#dc2626"; // Crimson sharp cutting matrix
+            ctx.fillRect(1, -20, 3, 24);
+            ctx.fillStyle = "#f8fafc"; // White hilt cap
+            ctx.fillRect(-5, 4, 10, 3);
             ctx.restore();
 
-            // Automatic Default Shooting
-            player.fireCooldown--;
-            let rates = player.activeSkin === 'solar' ? 12 : 16;
-            if(player.fireCooldown <= 0 && !boss) {
-                lasers.push({ x: player.x + 10, y: player.y, isSuper: false, speed: 6, color: "#38bdf8" });
-                player.fireCooldown = rates;
+            // Super focus gathering graphic indicators
+            if (charge > 0) {
+                ctx.strokeStyle = `rgba(254, 240, 138, ${charge / 100})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 3 * (1 - charge / 100), 0, Math.PI * 2);
+                ctx.stroke();
             }
-
-            // 3. Spawning & Logic Engine
-            if (!boss && frameCount % 90 === 0 && score < gameLevel * 8) {
-                enemies.push({ x: canvas.width, y: Math.random()*(canvas.height-100)+50, speed: 2, size: 10, hp: 1 });
-            }
-            if (!boss && score >= gameLevel * 8) spawnBoss();
-
-            // Lasers Loop Processing
-            for (let i = lasers.length - 1; i >= 0; i--) {
-                let l = lasers[i]; l.x += l.speed;
-                ctx.fillStyle = l.color;
-                ctx.fillRect(l.x, l.y - (l.isSuper ? 6 : 2), l.isSuper ? 24 : 10, l.isSuper ? 12 : 4);
-
-                // Laser hitting Boss
-                if (boss && l.x > boss.x - boss.size && l.y > boss.y - boss.size && l.y < boss.y + boss.size) {
-                    let dmg = l.isSuper ? 15 : (player.activeSkin === 'void' ? 2 : 1);
-                    boss.hp -= dmg; uiBossHp.innerText = Math.max(0, boss.hp);
-                    addParticles(l.x, l.y, "#ef4444"); lasers.splice(i, 1);
-                    
-                    if (boss.hp <= 0) {
-                        addParticles(boss.x, boss.y, "#f59e0b", 30);
-                        coinsWallet += gameLevel * 5; localStorage.setItem("skyCoins", coinsWallet); uiCoins.innerText = coinsWallet;
-                        boss = null; uiBossHp.innerText = "None"; gameLevel++; uiLevel.innerText = gameLevel; score = 0;
-                    }
-                    continue;
-                }
-
-                // Laser hitting small enemies
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    let e = enemies[j];
-                    if(l.x > e.x - e.size && l.y > e.y - e.size && l.y < e.y + e.size) {
-                        addParticles(e.x, e.y, "#0ea5e9");
-                        if(Math.random()<0.4) coins.push({ x: e.x, y: e.y, speed: 1 });
-                        enemies.splice(j, 1); lasers.splice(i, 1); score++;
-                        break;
-                    }
-                }
-                if(l.x > canvas.width || l.x < -50) lasers.splice(i,1);
-            }
-
-            // Boss AI combat behaviors
-            if (boss) {
-                boss.y += (boss.targetY - boss.y) * 0.03;
-                if(frameCount % 80 === 0) boss.targetY = Math.random()*200 + 100;
-                
-                // Draw Threatening Boss Structure
-                ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = "#dc2626";
-                ctx.fillStyle = "#991b1b"; ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, Math.PI*2); ctx.fill();
-                ctx.restore();
-
-                // Boss Threatening Super Attack Routine
-                boss.attackTimer++;
-                if (boss.attackTimer % 100 === 0) {
-                    // Fires 3 expanding cluster energy rings backwards
-                    for(let k=-1; k<=1; k++) {
-                        lasers.push({ x: boss.x - 20, y: boss.y + (k*25), speed: -4, isSuper: true, color: "#f43f5e" });
-                    }
-                }
-
-                // Collision Player vs Boss Hull
-                if (Math.hypot(player.x - boss.x, player.y - boss.y) < player.size + boss.size) triggerGameOver();
-            }
-
-            // Standard Enemies processing loop
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let e = enemies[i]; e.x -= e.speed;
-                ctx.fillStyle = "#1e293b"; ctx.fillRect(e.x - e.size, e.y - e.size, e.size * 2, e.size * 2);
-                if (Math.hypot(player.x - e.x, player.y - e.y) < player.size + e.size) triggerGameOver();
-                if (e.x + e.size < 0) enemies.splice(i, 1);
-            }
-
-            // Floating Currency Loop
-            for (let i = coins.length - 1; i >= 0; i--) {
-                let c = coins[i]; c.x -= c.speed;
-                ctx.fillStyle = "#eab308"; ctx.beginPath(); ctx.arc(c.x, c.y, 6, 0, Math.PI*2); ctx.fill();
-                if (Math.hypot(player.x - c.x, player.y - c.y) < player.size + 6) {
-                    coinsWallet++; localStorage.setItem("skyCoins", coinsWallet); uiCoins.innerText = coinsWallet;
-                    coins.splice(i, 1); continue;
-                }
-                if (c.x + 10 < 0) coins.splice(i, 1);
-            }
-
-            // Fragment explosions rendering loop
-            for(let i=particles.length-1; i>=0; i--) {
-                let p = particles[i]; p.x += p.vx; p.y += p.vy; p.alpha -= 0.03;
-                ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha;
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill();
-                ctx.globalAlpha = 1; if(p.alpha <= 0) particles.splice(i,1);
-            }
-
-            requestAnimationFrame(gameLoop);
+            ctx.restore();
         }
 
-        function triggerGameOver() {
-            isGameOver = true; if (navigator.vibrate) navigator.vibrate(40);
-            mainMenu.style.display = "flex";
-            mainMenu.querySelector("h2").innerText = "MISSION FAILED";
+        // DARK FANTASY MONSTER VECTOR ARTWORK GENERATOR
+        function drawAnimeMonster(ctx, x, y, size, frame, isBoss=false) {
+            ctx.save();
+            ctx.shadowBlur = isBoss ? 25 : 12;
+            ctx.shadowColor = isBoss ? "#ef4444" : "#a855f7";
+            
+            let pulse = Math.sin(frame * 0.08 + x) * 4;
+
+            // 1. Spiked outer heavy armor plates (Purple / Black carapace)
+            ctx.fillStyle = isBoss ? "#4c0519" : "#2e1065";
+            ctx.beginPath();
+            ctx.moveTo(x - size, y - size + pulse);
+            ctx.lineTo(x - size * 0.4, y - size * 1.4); // Left Spiked Horn
+            ctx.lineTo(x, y - size * 0.5);
+            ctx.lineTo(x + size * 0.4, y - size * 1.4); // Right Spiked Horn
+            ctx.lineTo(x + size, y - size - pulse);
+            ctx.lineTo(x + size * 1.3, y + size);
+            ctx.lineTo(x - size * 1.3, y + size);
+            ctx.closePath();
+            ctx.fill();
+
+            // 2. Giant Menacing Mouth Structure filled with sharp fangs
+            ctx.fillStyle = "#111827";
+            ctx.beginPath();
+            ctx.ellipse(x, y + size * 0.3, size * 0.8, size * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Render precise terrifying razor teeth claws
+            ctx.fillStyle = "#f8fafc";
+            let toothWidth = (size * 1.6) / 8;
+            for(let i = 0; i < 8; i++) {
+                let startX = (x - size * 0.8) + (i * toothWidth);
+                // Top row teeth
+                ctx.beginPath();
+                ctx.moveTo(startX, y + size * 0.1);
+                ctx.lineTo(startX + toothWidth/2, y + size * 0.35);
+                ctx.lineTo(startX + toothWidth, y + size * 0.1);
+                ctx.closePath(); ctx.fill();
+                // Bottom row teeth
+                ctx.beginPath();
+                ctx.moveTo(startX, y + size * 0.5);
+                ctx.lineTo(startX + toothWidth/2, y + size * 0.25);
+                ctx.lineTo(startX + toothWidth, y + size * 0.5);
+                ctx.closePath(); ctx.fill();
+            }
+
+            // 3. Multi Glowing Threatening Eyes Matrix
+            ctx.fillStyle = "#eab308"; // Piercing yellow glowing ocular units
+            if (isBoss) {
+                // Apex boss holds 4 massive bright neon red/yellow sensory cores
+                ctx.fillStyle = "#ef4444";
+                ctx.beginPath(); ctx.arc(x - size * 0.4, y - size * 0.2, 7, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + size * 0.4, y - size * 0.2, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#eab308";
+                ctx.beginPath(); ctx.arc(x - size * 0.15, y - size * 0.3, 5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + size * 0.15, y - size * 0.3, 5, 0, Math.PI*2); ctx.fill();
+            } else {
+                ctx.beginPath(); ctx.arc(x - size * 0.3, y - size * 0.2, 5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + size * 0.3, y - size * 0.2, 5, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
         }
 
-        // Navigation Input Listeners
-        canvas.addEventListener("touchstart", (e) => {
-            isPointerDown = true;
-            player.targetY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
-        }, { passive: true });
-
-        canvas.addEventListener("touchmove", (e) => {
-            player.targetY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
-        }, { passive: true });
-
-        canvas.addEventListener("touchend", () => {
-            isPointerDown = false;
-            if (player.charge >= 80 && !isGameOver) {
-                lasers.push({ x: player.x + 15, y: player.y, isSuper: true, speed: 8, color: "#facc15" });
+        function triggerBurst(x, y, color, count=8) {
+            for(let i=0; i<count; i++) {
+                entities.particles.push({
+                    x, y, vx: (Math.random() - 0.5)*7, vy: (Math.random() - 0.5)*7,
+                    r: Math.random()*3 + 1, alpha: 1, color
+                });
             }
-            player.charge = 0;
-        });
-    </script>
-</body>
-</html>
+        }
+
+        function handleSpawning() {
+            if (entities.activeBoss) return;
+
+            if (state.frame % 65 === 0 && state.score < state.currentLevel * 8) {
+                entities.enemies.push({
+                    x: Math.random() * (state.width - 60) + 30, y: -40,
+                    size: 16 + Math.random()*5, speed: 1.4 + state.currentLevel*0.4,
+                    hp: 1 + Math.floor(state.currentLevel * 0.5), maxHp: 1 + Math.floor(state.currentLevel * 0.5)
+                });
+            }
+
+            // Unlock Level boss encounters
+            if (state.score >= state.currentLevel * 8 && entities.enemies.length === 0) {
+                entities.activeBoss = {
+                    x: state.width / 2, y: -100, targetX: state.width/2, targetY: 130,
+                    size: 38, hp: state.currentLevel * 20, maxHp: state.currentLevel * 20,
+                    speed: 2, attackTimer: 0
+                };
+                document.getElementById("bossLabel").style.display = "block";
+                document.getElementById("bossBarWrap").style.display = "block";
+                document.getElementById("bossBar").style.width = "100%";
+                AudioEngine.playTone(146.83, 'sawtooth', 0.6, 0.2);
+            }
+        }
+
+        // MAIN GAME ENGINE COMPUTATION LOOP
+        function engineLoop() {
+            if (state.isGameOver) return;
+            state.frame++;
+
+            // 1. Draw Environment Sky Gradients based on Active Level Node
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, state.height);
+            if(state.currentLevel === 1) {
+                // Cool Noon
+                skyGrad.addColorStop(0, "#bae6fd"); skyGrad.addColorStop(0.6, "#7dd3fc"); skyGrad.addColorStop(1, "#38bdf8");
+            } else if(state.currentLevel === 2) {
+                // Crimson Sunset
+                skyGrad.addColorStop(0, "#2e1
