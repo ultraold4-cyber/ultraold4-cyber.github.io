@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Swordigo Engine Test</title>
+    <title>Swordigo: Full Character Engine</title>
     <style>
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #0b1329; overflow: hidden; font-family: sans-serif; position: fixed; }
-        #gameContainer { position: relative; width: 100%; max-width: 450px; height: 100%; max-height: 850px; margin: 0 auto; background: #000; overflow: hidden; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #bae6fd; overflow: hidden; font-family: sans-serif; position: fixed; }
+        #gameContainer { position: relative; width: 100%; max-width: 450px; height: 100%; max-height: 850px; margin: 0 auto; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; }
         
         .hud-layer { position: absolute; top: 15px; left: 15px; right: 15px; pointer-events: none; display: flex; justify-content: space-between; z-index: 10; }
-        .vitals { display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.6); padding: 6px; border-radius: 4px; }
-        .hearts-row { color: #ef4444; font-size: 14px; }
-        .mana-bar-container { width: 80px; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; }
-        .mana-bar-fill { width: 100%; height: 100%; background: #3b82f6; }
+        .vitals { display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.85); padding: 8px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .hearts-row { color: #ef4444; font-size: 16px; font-weight: bold; }
         
-        .controller-layer { position: absolute; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; z-index: 10; pointer-events: none; }
-        .dpad, .action-cluster { display: flex; gap: 10px; pointer-events: auto; }
-        .control-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; }
-        .control-btn:active { background: rgba(255,255,255,0.4); }
+        .controller-layer { position: absolute; bottom: 25px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; z-index: 10; pointer-events: none; }
+        .dpad, .action-cluster { display: flex; gap: 15px; pointer-events: auto; }
+        .control-btn { width: 68px; height: 68px; background: rgba(255,255,255,0.9); border: 3px solid #0284c7; border-radius: 50%; color: #0284c7; font-size: 26px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 6px 0 #0369a1; }
+        .control-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #0369a1; background: #e0f2fe; }
+        .btn-jump { background: #fef08a !important; border-color: #ca8a04 !important; color: #ca8a04 !important; box-shadow: 0 6px 0 #a16207 !important; }
+        .btn-jump:active { box-shadow: 0 2px 0 #a16207 !important; }
+        .btn-attack { background: #fca5a5 !important; border-color: #dc2626 !important; color: #dc2626 !important; box-shadow: 0 6px 0 #991b1b !important; }
+        .btn-attack:active { box-shadow: 0 2px 0 #991b1b !important; }
 
-        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; color: white; text-align: center; }
-        .action-start-btn { margin-top: 20px; background: #f59e0b; border: none; padding: 12px 35px; border-radius: 4px; font-weight: bold; color: black; font-size: 16px; cursor: pointer; }
+        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #bae6fd, #e0f2fe); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; color: #0369a1; text-align: center; }
+        .action-start-btn { margin-top: 20px; background: #f59e0b; border: none; padding: 14px 40px; border-radius: 25px; font-weight: bold; color: white; font-size: 18px; cursor: pointer; box-shadow: 0 4px 10px rgba(245,158,11,0.4); }
     </style>
 </head>
 <body>
@@ -33,7 +35,6 @@
     <div class="hud-layer">
         <div class="vitals">
             <div class="hearts-row" id="heartsDisplay">❤️❤️❤️</div>
-            <div class="mana-bar-container"><div class="mana-bar-fill" id="manaBar"></div></div>
         </div>
     </div>
 
@@ -43,19 +44,19 @@
             <div class="control-btn" id="ctrlRight">▶</div>
         </div>
         <div class="action-cluster">
-            <div class="control-btn" id="ctrlAttack" style="background:rgba(239,68,68,0.3)">⚔️</div>
+            <div class="control-btn btn-jump" id="ctrlJump">▲</div>
+            <div class="control-btn btn-attack" id="ctrlAttack">⚔️</div>
         </div>
     </div>
 
     <div class="screen-overlay" id="mainScreenOverlay">
-        <h1 id="titleText" style="margin:0; color:#f59e0b;">SWORDIGO ALPHA</h1>
-        <p style="color:#94a3b8; font-size:14px; padding:0 20px;">If this screen loads, the engine is healthy.</p>
-        <button class="action-start-btn" id="startAdventureTrigger">TAP TO START</button>
+        <h1 id="titleText" style="margin:0; font-size: 32px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">SWORDIGO WORLD</h1>
+        <p style="color:#0369a1; font-size:15px; padding:0 20px; font-weight: 500;">No more placeholder boxes. Full characters active!</p>
+        <button class="action-start-btn" id="startAdventureTrigger">START GAME</button>
     </div>
 </div>
 
 <script>
-// Prevent crash if container width is initially 0
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const container = document.getElementById('gameContainer');
@@ -67,101 +68,84 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-const world = { width: 2000, groundY: canvas.height - 100 };
+const world = { width: 3200, groundY: canvas.height - 100 };
 const camera = { x: 0 };
 let gameActive = false;
+let gameFrame = 0;
 
 const hero = {
-    x: 100, y: 100, w: 24, h: 40, vx: 0, vy: 0,
+    x: 100, y: 100, w: 32, h: 52, vx: 0, vy: 0,
     hp: 3, maxHp: 3, airborne: true, orientation: 'right', attackTime: 0
 };
 
 const mapPlatforms = [
     { x: 0, y: canvas.height - 100, w: 800, h: 100 },
-    { x: 250, y: canvas.height - 180, w: 200, h: 20 },
-    { x: 500, y: canvas.height - 260, w: 200, h: 20 },
-    { x: 900, y: canvas.height - 100, w: 1000, h: 100 }
+    { x: 320, y: canvas.height - 180, w: 160, h: 25 },
+    { x: 560, y: canvas.height - 250, w: 160, h: 25 },
+    { x: 900, y: canvas.height - 100, w: 1200, h: 100 }
 ];
 
 let monsters = [
-    { x: 350, y: canvas.height - 126, w: 26, h: 26, vx: 1.5, minX: 260, maxX: 430 }
+    { x: 420, y: canvas.height - 128, w: 32, h: 28, vx: 1.3, minX: 250, maxX: 650, hp: 1 }
 ];
 
 const activeInputs = { left: false, right: false };
 
-// Safe input register function
 function safeRegister(id, pressAction, releaseAction) {
     const btn = document.getElementById(id);
     if (!btn) return;
-    
-    // Mobile Touch
     btn.addEventListener('touchstart', (e) => { e.preventDefault(); pressAction(); }, {passive:false});
-    if (releaseAction) {
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); releaseAction(); }, {passive:false});
-    }
-    // Desktop Mouse Fallback
+    if (releaseAction) btn.addEventListener('touchend', (e) => { e.preventDefault(); releaseAction(); }, {passive:false});
     btn.addEventListener('mousedown', () => { pressAction(); });
-    if (releaseAction) {
-        btn.addEventListener('mouseup', () => { releaseAction(); });
-    }
+    if (releaseAction) btn.addEventListener('mouseup', () => { releaseAction(); });
 }
 
 safeRegister('ctrlLeft', () => { activeInputs.left = true; hero.orientation = 'left'; }, () => activeInputs.left = false);
 safeRegister('ctrlRight', () => { activeInputs.right = true; hero.orientation = 'right'; }, () => activeInputs.right = false);
 
-safeRegister('ctrlAttack', () => {
+safeRegister('ctrlJump', () => {
     if (!hero.airborne) {
-        hero.vy = -12;
+        hero.vy = -14;
         hero.airborne = true;
-    } else if (hero.attackTime === 0) {
+    }
+});
+
+safeRegister('ctrlAttack', () => {
+    if (hero.attackTime === 0) {
         hero.attackTime = 12;
-        // Hit check
-        let reach = 35;
+        let reach = 52;
         let ax = hero.orientation === 'right' ? hero.x + hero.w : hero.x - reach;
         monsters.forEach(m => {
             if (ax < m.x + m.w && ax + reach > m.x && hero.y < m.y + m.h && hero.y + hero.h > m.y) {
-                m.x += hero.orientation === 'right' ? 40 : -40; // Knockback
+                m.hp--;
             }
         });
     }
 });
 
-const startBtn = document.getElementById('startAdventureTrigger');
-if (startBtn) {
-    startBtn.addEventListener('click', () => {
-        const overlay = document.getElementById('mainScreenOverlay');
-        if (overlay) overlay.style.display = 'none';
-        
-        // Reset player parameters safely
-        hero.hp = 3;
-        hero.x = 100;
-        hero.y = 50;
-        hero.vx = 0;
-        hero.vy = 0;
-        
-        gameActive = true;
-    });
-}
+document.getElementById('startAdventureTrigger').addEventListener('click', () => {
+    document.getElementById('mainScreenOverlay').style.display = 'none';
+    hero.hp = 3; hero.x = 100; hero.y = 100; hero.vx = 0; hero.vy = 0;
+    monsters = [{ x: 420, y: canvas.height - 128, w: 32, h: 28, vx: 1.3, minX: 250, maxX: 650, hp: 1 }];
+    gameActive = true;
+});
 
 function updateEngine() {
+    gameFrame++;
     if (gameActive) {
-        // Movement Physics
-        if (activeInputs.left) hero.vx = -3.5;
-        else if (activeInputs.right) hero.vx = -(-3.5); // Safe +3.5 variable inversion override
-        else hero.vx *= 0.7;
+        if (activeInputs.left) hero.vx = -3.8;
+        else if (activeInputs.right) hero.vx = 3.8;
+        else hero.vx *= 0.75;
 
-        hero.vy += 0.55; // Gravity
+        hero.vy += 0.65;
         hero.x += hero.vx;
         hero.y += hero.vy;
 
-        // Boundaries
         if (hero.x < 0) hero.x = 0;
         if (hero.y > canvas.height + 40) {
-            // Respawn
             hero.x = 100; hero.y = 50; hero.vx = 0; hero.vy = 0; hero.hp--;
         }
 
-        // Platform Intersections
         hero.airborne = true;
         mapPlatforms.forEach(p => {
             if (hero.x < p.x + p.w && hero.x + hero.w > p.x && hero.y + hero.h > p.y && hero.y + hero.h - hero.vy <= p.y + 10) {
@@ -173,67 +157,131 @@ function updateEngine() {
 
         if (hero.attackTime > 0) hero.attackTime--;
 
-        // AI Loop
         monsters.forEach(m => {
             m.x += m.vx;
             if (m.x < m.minX || m.x > m.maxX) m.vx *= -1;
-            
-            // Player collision
             if (hero.x < m.x + m.w && hero.x + hero.w > m.x && hero.y < m.y + m.h && hero.y + hero.h > m.y) {
                 hero.hp--;
                 hero.x += hero.orientation === 'right' ? -40 : 40;
-                hero.vy = -3;
+                hero.vy = -4;
             }
         });
 
-        // Dynamic Camera Lock Tracking
+        for(let i=monsters.length-1; i>=0; i--) {
+            if(monsters[i].hp <= 0) monsters.splice(i,1);
+        }
+
         camera.x = hero.x - canvas.width / 2;
         if (camera.x < 0) camera.x = 0;
         if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
 
         if (hero.hp <= 0) {
             gameActive = false;
-            const overlay = document.getElementById('mainScreenOverlay');
-            const title = document.getElementById('titleText');
-            if (overlay && title) {
-                title.innerText = "GAME OVER";
-                overlay.style.display = 'flex';
-            }
+            document.getElementById('titleText').innerText = "GAME OVER";
+            document.getElementById('mainScreenOverlay').style.display = 'flex';
         }
     }
 
-    // Render Canvas Operations
-    ctx.fillStyle = '#0f172a';
+    // Sky rendering
+    let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGrad.addColorStop(0, '#bae6fd');
+    skyGrad.addColorStop(0.6, '#e0f2fe');
+    skyGrad.addColorStop(1, '#f0fdf4');
+    ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Sun
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath(); ctx.arc(canvas.width - 80, 80, 40, 0, Math.PI * 2); ctx.fill();
 
     ctx.save();
     ctx.translate(-camera.x, 0);
 
     // Platforms
-    ctx.fillStyle = '#334155';
     mapPlatforms.forEach(p => {
-        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = '#78350f'; ctx.fillRect(p.x, p.y, p.w, p.h); 
+        ctx.fillStyle = '#22c55e'; ctx.fillRect(p.x, p.y, p.w, 12);  
     });
 
-    // Enemy
-    ctx.fillStyle = '#a855f7';
+    // --- CHARACTER DESIGN ONLY: GREEN FOREST SLIME MONSTER ---
     monsters.forEach(m => {
-        ctx.fillRect(m.x, m.y, m.w, m.h);
+        let squish = Math.sin(gameFrame * 0.2) * 2;
+        ctx.fillStyle = '#10b981'; // Emerald Green
+        ctx.beginPath();
+        ctx.arc(m.x + 16, m.y + 14 + squish, 15, Math.PI, 0, false);
+        ctx.lineTo(m.x + 32, m.y + 28);
+        ctx.lineTo(m.x, m.y + 28);
+        ctx.closePath(); ctx.fill();
+
+        // Angry Slime Eyes
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(m.x + 6, m.y + 12 + squish, 5, 5);
+        ctx.fillRect(m.x + 20, m.y + 12 + squish, 5, 5);
+        ctx.fillStyle = '#991b1b'; // Red angry pupils
+        ctx.fillRect(m.x + 8, m.y + 14 + squish, 3, 3);
+        ctx.fillRect(m.x + 20, m.y + 14 + squish, 3, 3);
     });
 
-    // Hero Character Profile Block
-    ctx.fillStyle = '#3b82f6';
-    ctx.fillRect(hero.x, hero.y, hero.w, hero.h);
+    // --- CHARACTER DESIGN ONLY: HERO KNIGHT ---
+    let hx = hero.x, hy = hero.y, hw = hero.w, hh = hero.h;
+    let lookRight = hero.orientation === 'right';
+    let legCycle = (Math.abs(hero.vx) > 0.1 && !hero.airborne) ? Math.sin(gameFrame * 0.25) * 6 : 0;
 
-    // Swing Slashing Effects Overlay
+    // 1. Knight boots
+    ctx.fillStyle = '#451a03'; 
+    ctx.fillRect(hx + 4, hy + hh - 8 + legCycle, 10, 8);
+    ctx.fillRect(hx + hw - 14, hy + hh - 8 - legCycle, 10, 8);
+
+    // 2. Knight Tunic Outfit
+    ctx.fillStyle = '#2563eb'; 
+    ctx.fillRect(hx + 2, hy + 20, hw - 4, 24);
+
+    // 3. Warrior Cape
+    ctx.fillStyle = '#dc2626'; 
+    if (lookRight) ctx.fillRect(hx - 3, hy + 22, 6, 18);
+    else ctx.fillRect(hx + hw - 3, hy + 22, 6, 18);
+
+    // 4. Detailed Head and Face Features
+    ctx.fillStyle = '#fed7aa'; 
+    ctx.fillRect(hx + 5, hy + 6, hw - 10, 14);
+    
+    // Spiky Hair Details
+    ctx.fillStyle = '#b45309'; 
+    ctx.fillRect(hx + 3, hy, hw - 6, 7); 
+    if (lookRight) {
+        ctx.fillRect(hx + hw - 8, hy + 6, 6, 6); 
+        ctx.fillStyle = '#0f172a'; // Eye position
+        ctx.fillRect(hx + hw - 12, hy + 10, 3, 4);
+    } else {
+        ctx.fillRect(hx + 2, hy + 6, 6, 6); 
+        ctx.fillStyle = '#0f172a'; // Eye position
+        ctx.fillRect(hx + 9, hy + 10, 3, 4);
+    }
+
+    // 5. Sword Slashing Combat Graphics
+    ctx.fillStyle = '#94a3b8'; 
     if (hero.attackTime > 0) {
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(hero.orientation === 'right' ? hero.x + hero.w : hero.x - 25, hero.y + 12, 25, 12);
+        ctx.fillStyle = '#fbbf24'; // Golden Energy Trail
+        if (lookRight) {
+            ctx.fillRect(hx + hw - 2, hy + 22, 42, 8); 
+            ctx.fillStyle = '#ca8a04'; ctx.fillRect(hx + hw - 6, hy + 20, 4, 12); 
+        } else {
+            ctx.fillRect(hx - 40, hy + 22, 42, 8); 
+            ctx.fillStyle = '#ca8a04'; ctx.fillRect(hx + hw - 30, hy + 20, 4, 12); 
+        }
+    } else {
+        // Sheathed sword on back configuration
+        if (lookRight) {
+            ctx.fillRect(hx - 2, hy + 12, 6, 22);
+            ctx.fillStyle = '#b45309'; ctx.fillRect(hx - 4, hy + 32, 10, 4);
+        } else {
+            ctx.fillRect(hx + hw - 4, hy + 12, 6, 22);
+            ctx.fillStyle = '#b45309'; ctx.fillRect(hx + hw - 6, hy + 32, 10, 4);
+        }
     }
 
     ctx.restore();
 
-    // Safely refresh metrics HUD
     const heartsEl = document.getElementById('heartsDisplay');
     if (heartsEl) {
         let str = '';
@@ -244,7 +292,6 @@ function updateEngine() {
     requestAnimationFrame(updateEngine);
 }
 
-// Start master frame loop cycle
 updateEngine();
 </script>
 </body>
