@@ -3,25 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Aether Blade: Crimson Horizon</title>
+    <title>Swordigo: The Aether Chronicles</title>
     <style>
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #030712; color: #f8fafc; font-family: -apple-system, sans-serif; overflow: hidden; position: fixed; display: flex; align-items: center; justify-content: center; }
-        #gameContainer { position: relative; width: 100%; max-width: 450px; height: 100%; max-height: 850px; background: #000; overflow: hidden; box-shadow: 0 0 60px rgba(168, 85, 247, 0.2); }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #020617; overflow: hidden; font-family: 'Courier New', Courier, monospace; position: fixed; }
+        #gameContainer { position: relative; width: 100%; max-width: 450px; height: 100%; max-height: 850px; margin: 0 auto; background: #090d16; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.9); border: 2px solid #1e293b; }
         canvas { display: block; width: 100%; height: 100%; }
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px) 20px; z-index: 5; }
-        .top-hud { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .hud-card { background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(168, 85, 247, 0.3); padding: 8px 14px; border-radius: 12px; font-weight: 800; font-size: 13px; letter-spacing: 1px; color: #c084fc; display: flex; align-items: center; gap: 6px; }
-        .charge-meter-container { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 20px; height: 8px; overflow: hidden; margin-top: 10px; }
-        .charge-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #a855f7, #6366f1); transition: width 0.05s linear; }
-        .boss-bar-container { width: 100%; background: rgba(0,0,0,0.7); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; height: 10px; overflow: hidden; margin-top: 8px; display: none; }
-        .boss-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); }
-        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 30px; text-align: center; cursor: pointer; pointer-events: auto; }
-        .menu-title { font-size: 32px; font-weight: 900; margin-bottom: 4px; background: linear-gradient(135deg, #ffffff, #a855f7, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
-        .menu-sub { font-size: 11px; color: #94a3b8; margin-bottom: 35px; letter-spacing: 3px; font-weight: bold; }
-        .tap-zone { background: linear-gradient(135deg, #a855f7, #4f46e5); color: white; padding: 16px 32px; border-radius: 14px; font-weight: 900; font-size: 16px; letter-spacing: 1px; width: 240px; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); animation: pulseGlow 2.5s infinite ease-in-out; }
-        @keyframes pulseGlow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 4px 30px rgba(168, 85, 247, 0.7); } }
-        .hint-text { color: #64748b; font-size: 11px; margin-top: 40px; max-width: 280px; line-height: 1.6; }
+        
+        /* Premium Authentic HUD */
+        .hud-layer { position: absolute; top: env(safe-area-inset-top, 15px); left: 15px; right: 15px; pointer-events: none; display: flex; justify-content: space-between; z-index: 10; }
+        .vitals { display: flex; flex-direction: column; gap: 5px; background: rgba(9, 13, 22, 0.75); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .hearts-row { display: flex; gap: 3px; font-size: 16px; }
+        .mana-bar-container { width: 90px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .mana-bar-fill { width: 100%; height: 100%; background: #3b82f6; transition: width 0.1s; }
+        .spell-badge { width: 44px; height: 44px; background: rgba(15, 23, 42, 0.9); border: 2px solid #eab308; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; pointer-events: auto; box-shadow: 0 0 10px rgba(234, 179, 8, 0.3); }
+
+        /* Tactical Control Layout */
+        .controller-layer { position: absolute; bottom: calc(env(safe-area-inset-bottom, 20px) + 15px); left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; z-index: 10; pointer-events: none; }
+        .dpad, .action-cluster { display: flex; gap: 14px; pointer-events: auto; align-items: center; }
+        .control-btn { width: 66px; height: 66px; background: linear-gradient(135deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95)); border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; color: #f1f5f9; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4); text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .control-btn:active { background: #334155; transform: scale(0.92); border-color: #64748b; }
+        .btn-action-magic { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); color: #93c5fd; }
+        .btn-action-slash { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); color: #fca5a5; width: 72px; height: 72px; font-size: 28px; }
+
+        /* Game Over / Welcome Overlay */
+        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1e1b4b 0%, #020617 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; color: white; text-align: center; padding: 25px; }
+        .game-title { font-size: 34px; font-weight: 900; letter-spacing: 1px; color: #f59e0b; text-shadow: 0 4px 8px rgba(0,0,0,0.7); font-family: 'Georgia', serif; }
+        .action-start-btn { margin-top: 30px; background: linear-gradient(180deg, #f59e0b, #d97706); border: 2px solid #fef08a; padding: 16px 45px; border-radius: 6px; font-weight: 900; font-size: 16px; letter-spacing: 1px; box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5); text-shadow: 0 1px 2px rgba(0,0,0,0.4); cursor: pointer; }
     </style>
 </head>
 <body>
@@ -29,425 +37,902 @@
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
     
-    <div class="ui-layer">
-        <div>
-            <div class="top-hud">
-                <div class="hud-card" id="lvlDisplay">✨ ZONE 1</div>
-                <div class="hud-card" id="scoreDisplay">🔮 0</div>
-            </div>
-            <div class="charge-meter-container">
-                <div class="charge-bar" id="chargeBar"></div>
-            </div>
+    <div class="hud-layer">
+        <div class="vitals">
+            <div class="hearts-row" id="heartsDisplay">❤️❤️❤️</div>
+            <div class="mana-bar-container"><div class="mana-bar-fill" id="manaBar"></div></div>
+            <div style="color: #94a3b8; font-size: 10px; font-weight: bold;" id="xpDisplay">LVL 1 - XP 0%</div>
         </div>
-        <div class="boss-bar-container" id="bossBarHost">
-            <div class="boss-bar" id="bossBar"></div>
+        <!-- Active Spell Toggle Slot -->
+        <div class="spell-badge" id="btnSpellSwap">🔮</div>
+    </div>
+
+    <div class="controller-layer">
+        <div class="dpad">
+            <div class="control-btn" id="ctrlLeft">◀</div>
+            <div class="control-btn" id="ctrlRight">▶</div>
+        </div>
+        <div class="action-cluster">
+            <div class="control-btn btn-action-magic" id="ctrlMagic">✨</div>
+            <div class="control-btn btn-action-slash" id="ctrlAttack">⚔️</div>
         </div>
     </div>
 
-    <div class="screen-overlay" id="menuOverlay">
-        <div class="menu-title">AETHER BLADE</div>
-        <div class="menu-sub">CRIMSON HORIZON</div>
-        <div class="tap-zone">ENTER BEAUTIFUL SPACE</div>
-        <div class="hint-text">💡 Hold down your finger to automatically fire. Keep holding down to charge up and automatically unleash the massive Solar Beam Super Attack!</div>
+    <div class="screen-overlay" id="mainScreenOverlay">
+        <div class="game-title">SWORDIGO</div>
+        <div style="font-size:10px; color:#a5b4fc; letter-spacing:5px; margin-top:5px;">THE AETHER REIGN</div>
+        <div style="font-size:12px; color:#94a3b8; margin-top:25px; max-width:300px; line-height:1.6; font-family:sans-serif;">Master tactical platforming, swap unique elemental spells, cleanse healing shrines, and eliminate the Corrupted Core.</div>
+        <button class="action-start-btn" id="startAdventureTrigger">ENTER THE REALM</button>
     </div>
 </div>
 
 <script>
-// --- SOUNDSCAPE ENGINE (PEACEFUL & SOFT) ---
+// --- AUDIO ENGINE ---
 const AudioEngine = {
-    ctx: null,
-    isPlaying: false,
-    step: 0,
-    intervalId: null,
-    
-    init() {
-        if (this.ctx) return;
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioContext();
-    },
-    
-    playSoftNode(freq, duration, vol, type = 'sine') {
-        if (!this.ctx || !this.isPlaying) return;
+    ctx: null, active: false, loopId: null, tick: 0,
+    init() { if(this.ctx) return; const AC = window.AudioContext||window.webkitAudioContext; this.ctx = new AC(); },
+    synth(freq, duration, vol, wave='sine', slide=0) {
+        if(!this.ctx || !this.active) return;
         try {
-            let osc = this.ctx.createOscillator();
-            let gain = this.ctx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            
-            // Ultra soft attack and long fade out to remain soothing
-            gain.gain.setValueAtTime(0, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-            
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start();
-            osc.stop(this.ctx.currentTime + duration);
+            let o = this.ctx.createOscillator(), g = this.ctx.createGain();
+            o.type = wave; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            if(slide > 0) o.frequency.exponentialRampToValueAtTime(slide, this.ctx.currentTime + duration);
+            g.gain.setValueAtTime(0, this.ctx.currentTime);
+            g.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+            o.connect(g); g.connect(this.ctx.destination);
+            o.start(); o.stop(this.ctx.currentTime + duration);
         } catch(e){}
     },
-    
-    startAmbientAmbient() {
-        this.init();
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        this.isPlaying = true;
-        
-        // Peaceful minor pentatonic notes (A-chord progressions)
-        const notes = [220.00, 261.63, 293.66, 329.63, 392.00, 440.00];
-        
-        this.intervalId = setInterval(() => {
-            if (!this.isPlaying) return;
-            
-            // Soft base pad pulse
-            if (this.step % 4 === 0) {
-                this.playSoftNode(notes[this.step % 3] / 2, 1.5, 0.04, 'sine');
-            }
-            
-            // Soft melodic high bell notes
-            if (this.step % 2 === 0 && Math.random() > 0.3) {
-                let randomNote = notes[Math.floor(Math.random() * notes.length)];
-                this.playSoftNode(randomNote, 0.8, 0.02, 'sine');
-            }
-            
-            this.step++;
-        }, 600); // Super slow tempo, calming rhythm
+    startMusic() {
+        this.init(); this.active = true; if(this.ctx.state==='suspended') this.ctx.resume();
+        const score = [220, 261, 329, 293, 261, 196, 220, 220]; 
+        this.loopId = setInterval(() => {
+            if(this.tick % 4 === 0) this.synth(score[this.tick % score.length], 0.8, 0.03, 'triangle');
+            if(this.tick % 8 === 2) this.synth(score[(this.tick + 2) % score.length] * 1.5, 0.4, 0.015, 'sine');
+            this.tick++;
+        }, 400);
     },
-    
-    playSuperLaserSound() {
-        if (!this.ctx) return;
-        try {
-            let osc = this.ctx.createOscillator();
-            let gain = this.ctx.createGain();
-            osc.type = 'triangle'; // Smooth but clear presence
-            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.4);
-            
-            gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
-            
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.5);
-        } catch(e){}
-    },
-
-    stop() {
-        if (this.intervalId) clearInterval(this.intervalId);
-        this.isPlaying = false;
-    }
+    stop() { clearInterval(this.loopId); this.active = false; }
 };
 
-// --- CORE GAME ENGINE ---
+// --- GAME CONFIG & SYSTEM SETUP ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const container = document.getElementById('gameContainer');
 
-const state = {
-    running: false,
-    level: 1,
-    score: 0,
-    frame: 0,
-    touchActive: false
+function resizeCanvas() {
+    canvas.width = container.clientWidth || window.innerWidth;
+    canvas.height = container.clientHeight || window.innerHeight;
+}
+resizeCanvas();
+
+const world = { width: 3200, groundY: canvas.height - 110 };
+const camera = { x: 0, shake: 0 };
+const engine = { active: false, score: 0, level: 1, xp: 0, nextXp: 100 };
+
+// --- HERO STATE MANAGEMENT ---
+const hero = {
+    x: 150, y: world.groundY - 60, w: 24, h: 42, vx: 0, vy: 0,
+    hp: 3, maxHp: 3, mp: 100, maxMp: 100,
+    airborne: true, orientation: 'right', attackTime: 0,
+    spellSelection: 'bolt', spellCooldown: 0, hitFlash: 0
 };
 
-const player = {
-    x: 0, y: 0, radius: 16,
-    targetX: 0, targetY: 0,
-    charge: 0, fireCooldown: 0,
-    superLaserActive: 0
+// --- WORLD ASSETS: PLATFORMS, SHRINES, ENEMIES ---
+const mapPlatforms = [
+    { x: 0, y: world.groundY, w: 750, h: 120, type: 'grass' },
+    { x: 300, y: world.groundY - 80, w: 160, h: 24, type: 'stone' },
+    { x: 550, y: world.groundY - 160, w: 140, h: 24, type: 'stone' },
+    { x: 880, y: world.groundY, w: 800, h: 120, type: 'grass' },
+    { x: 1000, y: world.groundY - 90, w: 200, h: 24, type: 'stone' },
+    { x: 1320, y: world.groundY - 180, w: 160, h: 24, type: 'stone' },
+    { x: 1800, y: world.groundY, w: 1400, h: 120, type: 'dungeon' } // Final Boss Sanctuary Arena
+];
+
+const healingShrines = [
+    { x: 1100, y: world.groundY - 130, w: 35, h: 40, pulse: 0, active: true }
+];
+
+let monsters = [
+    { id: 1, x: 400, y: world.groundY - 30, w: 28, h: 28, mode: 'crawl', vx: 1.6, minX: 300, maxX: 680, hp: 2, maxHp: 2, color: '#818cf8' },
+    { id: 2, x: 1050, y: world.groundY - 122, w: 26, h: 26, mode: 'crawl', vx: 1.2, minX: 1010, maxX: 1180, hp: 2, maxHp: 2, color: '#c084fc' },
+    { id: 3, x: 1400, y: world.groundY - 30, w: 32, h: 32, mode: 'crawl', vx: 2.2, minX: 950, maxX: 1550, hp: 3, maxHp: 3, color: '#f43f5e' },
+    { id: 4, x: 2100, y: world.groundY - 30, w: 30, h: 30, mode: 'crawl', vx: 1.8, minX: 1850, maxX: 2300, hp: 3, maxHp: 3, color: '#818cf8' }
+];
+
+let masterBoss = {
+    x: 2750, y: world.groundY - 90, w: 55, h: 90, hp: 25, maxHp: 25,
+    attackClock: 0, phase: 'idle', stateTimer: 0
 };
 
-const entities = {
-    enemies: [],
-    lasers: [],
-    particles: [],
-    stars: [],
-    activeBoss: null
-};
+let fieldProjectiles = [];
+let clusterParticles = [];
+const activeInputs = { left: false, right: false };
 
-// Background Generation
-for(let i=0; i<35; i++) {
-    entities.stars.push({ x: Math.random() * 450, y: Math.random() * 850, size: Math.random() * 2 + 0.5, speed: Math.random() * 0.5 + 0.2 });
+// --- BUTTON DRIVERS & SCRIPT LINX ---
+function registerInput(elementId, beginCallback, finishCallback) {
+    const btn = document.getElementById(elementId);
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); beginCallback(); }, {passive:false});
+    if(finishCallback) btn.addEventListener('touchend', (e) => { e.preventDefault(); finishCallback(); }, {passive:false});
 }
 
-function resize() {
-    const container = document.getElementById('gameContainer');
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-    if(!state.running) {
-        player.x = canvas.width / 2;
-        player.y = canvas.height * 0.75;
-        player.targetX = player.x;
-        player.targetY = player.y;
+registerInput('ctrlLeft', () => { activeInputs.left = true; hero.orientation = 'left'; }, () => activeInputs.left = false);
+registerInput('ctrlRight', () => { activeInputs.right = true; hero.orientation = 'right'; }, () => activeInputs.right = false);
+
+registerInput('ctrlAttack', () => {
+    if (!hero.airborne && Math.abs(hero.vx) < 0.5) {
+        // High physics jump command arc
+        hero.vy = -13.2; hero.airborne = true;
+        AudioEngine.synth(290, 0.15, 0.05, 'triangle', 450);
+    } else if (hero.attackTime === 0) {
+        // Primary Sword Swing Weapon Event
+        hero.attackTime = 14;
+        AudioEngine.synth(520, 0.1, 0.08, 'sawtooth', 850);
+        evaluateSwordSlashes();
     }
-}
-window.addEventListener('resize', resize);
-resize();
+});
 
-// --- INPUT LISTENERS ---
-const overlay = document.getElementById('menuOverlay');
-overlay.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if (!state.running) {
-        state.running = true;
-        state.level = 1;
-        state.score = 0;
-        player.charge = 0;
-        entities.enemies = [];
-        entities.lasers = [];
-        entities.particles = [];
-        entities.activeBoss = null;
-        overlay.style.display = 'none';
-        AudioEngine.startAmbientAmbient();
+registerInput('ctrlMagic', () => {
+    if (hero.spellCooldown <= 0) {
+        if(hero.spellSelection === 'bolt' && hero.mp >= 20) {
+            hero.mp -= 20; hero.spellCooldown = 22;
+            fieldProjectiles.push({
+                x: hero.orientation === 'right' ? hero.x + hero.w : hero.x - 16,
+                y: hero.y + 14, vx: hero.orientation === 'right' ? 8.5 : -8.5,
+                w: 16, h: 8, dmg: 1, variant: 'bolt'
+            });
+            AudioEngine.synth(650, 0.2, 0.05, 'sine', 1200);
+        } else if(hero.spellSelection === 'bomb' && hero.mp >= 40) {
+            hero.mp -= 40; hero.spellCooldown = 45;
+            fieldProjectiles.push({
+                x: hero.orientation === 'right' ? hero.x + hero.w : hero.x - 18,
+                y: hero.y + 8, vx: hero.orientation === 'right' ? 5 : -5,
+                vy: -4, w: 18, h: 18, dmg: 3, variant: 'bomb'
+            });
+            AudioEngine.synth(300, 0.25, 0.06, 'triangle', 100);
+        }
     }
-}, {passive: false});
+});
 
-canvas.addEventListener('touchstart', (e) => { state.touchActive = true; updateInput(e.touches[0]); });
-canvas.addEventListener('touchmove', (e) => { updateInput(e.touches[0]); });
-canvas.addEventListener('touchend', () => { state.touchActive = false; });
+document.getElementById('btnSpellSwap').addEventListener('click', () => {
+    hero.spellSelection = hero.spellSelection === 'bolt' ? 'bomb' : 'bolt';
+    document.getElementById('btnSpellSwap').innerText = hero.spellSelection === 'bolt' ? '🔮' : '💥';
+    AudioEngine.synth(440, 0.08, 0.04, 'sine');
+});
 
-function updateInput(touch) {
-    const rect = canvas.getBoundingClientRect();
-    player.targetX = touch.clientX - rect.left;
-    player.targetY = touch.clientY - rect.top;
+document.getElementById('startAdventureTrigger').addEventListener('click', () => {
+    document.getElementById('mainScreenOverlay').style.display = 'none';
+    compileEngineReset();
+    engine.active = true;
+    AudioEngine.startMusic();
+});
+
+function compileEngineReset() {
+    hero.hp = 3; hero.maxHp = 3; hero.mp = 100; hero.x = 150; hero.y = world.groundY - 100; hero.vx = 0; hero.vy = 0;
+    engine.score = 0; engine.level = 1; engine.xp = 0; masterBoss.hp = 25;
+    monsters.forEach(m => m.hp = m.maxHp); fieldProjectiles = []; clusterParticles = [];
 }
 
-function spawnExplosion(x, y, color, count = 8) {
-    for(let i=0; i<count; i++) {
-        entities.particles.push({
-            x: x, y: y,
-            vx: (Math.random() - 0.5) * 6,
-            vy: (Math.random() - 0.5) * 6,
-            radius: Math.random() * 3 + 1,
-            alpha: 1,
-            color: color
+function spawnParticleBurst(x, y, color, density=8, power=4) {
+    for(let i=0; i<density; i++) {
+        clusterParticles.push({
+            x: x, y: y, vx: (Math.random() - 0.5) * power, vy: (Math.random() - 0.5) * power,
+            size: Math.random() * 3.5 + 1, alpha: 1, color: color
         });
     }
 }
 
-function triggerGameOver() {
-    state.running = false;
-    AudioEngine.stop();
-    overlay.style.display = 'flex';
-    document.querySelector('.menu-title').innerText = "HORIZON LOST";
-    document.querySelector('.tap-zone').innerText = "RE-ENTER ARENA";
-}
-
-// --- RENDER FUNCTIONS ---
-function drawPlayer(x, y, r) {
-    ctx.save();
-    // Glowing beautiful aura
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#a855f7';
+// --- ENGINE CALCULATION COMPUTATIONS ---
+function evaluateSwordSlashes() {
+    let reach = 42;
+    let attackZoneX = hero.orientation === 'right' ? hero.x + hero.w : hero.x - reach;
+    let attackZoneY = hero.y - 5;
     
-    // Sleek fighter design
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(x, y - r - 4);
-    ctx.lineTo(x + r, y + r);
-    ctx.lineTo(x, y + r/2);
-    ctx.lineTo(x - r, y + r);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-}
-
-function drawEnemy(x, y, size, isBoss) {
-    ctx.save();
-    ctx.shadowBlur = isBoss ? 20 : 8;
-    ctx.shadowColor = isBoss ? '#ef4444' : '#6366f1';
-    ctx.fillStyle = isBoss ? '#ef4444' : '#818cf8';
-    
-    ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-}
-
-// --- CORE MECHANICS LOOP ---
-function coreLoop() {
-    state.frame++;
-    
-    // Clear viewport gently to leave trails
-    ctx.fillStyle = 'rgba(3, 7, 18, 0.25)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw Ambient Starfield
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    entities.stars.forEach(s => {
-        ctx.fillRect(s.x, s.y, s.size, s.size);
-        s.y += s.speed;
-        if(s.y > canvas.height) s.y = -5;
+    monsters.forEach(m => {
+        if(attackZoneX < m.x + m.w && attackZoneX + reach > m.x && attackZoneY < m.y + m.h && attackZoneY + hero.h + 10 > m.y) {
+            m.hp--;
+            camera.shake = 10; // Instantly trigger screen impact mechanics
+            spawnParticleBurst(m.x + m.w/2, m.y + m.h/2, '#ef4444', 12);
+            m.x += hero.orientation === 'right' ? 15 : -15; // Knockback processing
+            AudioEngine.synth(180, 0.12, 0.1, 'sawtooth');
+        }
     });
 
-    if (state.running) {
-        document.getElementById('lvlDisplay').innerText = `✨ ZONE ${state.level}`;
-        document.getElementById('scoreDisplay').innerText = `🔮 ${state.score}`;
-        
-        // Handle coordinates smoothing
-        player.x += (player.targetX - player.x) * 0.15;
-        player.y += (player.targetY - player.y) * 0.15;
-        player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
-        player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
-        
-        // Charge Logic & Super Weapon Loop
-        if (state.touchActive && player.superLaserActive <= 0) {
-            player.charge = Math.min(player.charge + 0.6, 100);
-            if(player.charge >= 100) {
-                player.superLaserActive = 45; // Super Beam duration length
-                player.charge = 0;
-                AudioEngine.playSuperLaserSound();
-            }
-        } else if(!state.touchActive) {
-            player.charge = Math.max(player.charge - 1, 0);
+    // Check Boss Damage Collider
+    if(masterBoss.hp > 0 && attackZoneX < masterBoss.x + masterBoss.w && attackZoneX + reach > masterBoss.x && attackZoneY < masterBoss.y + masterBoss.h && attackZoneY + hero.h + 10 > masterBoss.y) {
+        masterBoss.hp--; camera.shake = 14;
+        spawnParticleBurst(masterBoss.x + masterBoss.w/2, masterBoss.y + masterBoss.h/2, '#fbbf24', 15, 6);
+        masterBoss.x += hero.orientation === 'right' ? 8 : -8;
+        if(masterBoss.hp <= 0) awardEpicVictory();
+    }
+}
+
+function awardEpicVictory() {
+    spawnParticleBurst(masterBoss.x + 25, masterBoss.y + 45, '#fbbf24', 60, 10);
+    setTimeout(() => {
+        engine.active = false; AudioEngine.stop();
+        document.getElementById('mainScreenOverlay').style.display = 'flex';
+        document.querySelector('.game-title').innerText = "VICTORY ACHIEVED";
+        document.querySelector('.action-start-btn').innerText = "AWAKEN AGAIN";
+    }, 2000);
+}
+
+function handlePhysicsEngine() {
+    // Left/Right Movement Speed Math
+    if(activeInputs.left) hero.vx = -4.2;
+    else if(activeInputs.right) hero.vx = 4.2;
+    else hero.vx *= 0.72;
+
+    hero.vy += 0.58; // Gravity scalar acceleration
+    hero.x += hero.vx; hero.y += hero.vy;
+
+    if (hero.x < 0) hero.x = 0;
+    if (hero.x > world.width - hero.w) hero.x = world.width - hero.w;
+
+    // Rigid Platform Intersections Logic
+    hero.airborne = true;
+    mapPlatforms.forEach(p => {
+        if(hero.x < p.x + p.w && hero.x + hero.w > p.x &&
+           hero.y + hero.h > p.y && hero.y + hero.h - hero.vy <= p.y + 8) {
+            hero.y = p.y - hero.h; hero.vy = 0; hero.airborne = false;
         }
-        document.getElementById('chargeBar').style.width = `${player.charge}%`;
-        
-        // Regular Auto Fire System
-        player.fireCooldown--;
-        if (state.touchActive && player.fireCooldown <= 0 && player.superLaserActive <= 0) {
-            entities.lasers.push({ x: player.x, y: player.y - 10, vy: -14, w: 4, h: 12 });
-            AudioEngine.playSoftNode(523.25, 0.05, 0.01, 'sine');
-            player.fireCooldown = 8;
+    });
+
+    // Pitfall hazard bounds check
+    if(hero.y > canvas.height + 50) { hero.hp = 0; }
+    
+    // Naturally regenerate minimal mana ticks over time
+    if(hero.mp < hero.maxMp && Math.random() < 0.15) hero.mp += 1;
+
+    if(hero.spellCooldown > 0) hero.spellCooldown--;
+    if(hero.attackTime > 0) hero.attackTime--;
+    if(hero.hitFlash > 0) hero.hitFlash--;
+
+    // High Dynamic Camera Frame Lock Tracking
+    camera.x = hero.x - canvas.width / 2;
+    if (camera.x < 0) camera.x = 0;
+    if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
+    
+    // Apply camera dampening filters
+    if(camera.shake > 0) camera.shake *= 0.85;
+}
+
+function updateWorldEntities() {
+    // Control Patrol Monsters AI Loop
+    monsters.forEach(m => {
+        m.x += m.vx;
+        if(m.x < m.minX || m.x > m.maxX) m.vx *= -1;
+
+        // Collision Check Against Hero Profile
+        if(hero.hitFlash <= 0 && hero.x < m.x + m.w && hero.x + hero.w > m.x && hero.y < m.y + m.h && hero.y + hero.h > m.y) {
+            hero.hp--; hero.hitFlash = 45;
+            hero.vx = m.vx * 3; hero.vy = -4; // Launch knockback damage physics vector
+            camera.shake = 12;
+            AudioEngine.synth(120, 0.25, 0.12, 'sawtooth');
         }
-        
-        // Trigger Super Attack Visual
-        if (player.superLaserActive > 0) {
-            player.superLaserActive--;
-            ctx.save();
-            ctx.shadowBlur = 30;
-            ctx.shadowColor = '#c084fc';
-            
-            // Giant vertical energy beam
-            let beamWidth = 50 + Math.random() * 15;
-            let gradient = ctx.createLinearGradient(player.x - beamWidth/2, 0, player.x + beamWidth/2, 0);
-            gradient.addColorStop(0, 'rgba(168, 85, 247, 0.2)');
-            gradient.addColorStop(0.3, '#c084fc');
-            gradient.addColorStop(0.5, '#ffffff');
-            gradient.addColorStop(0.7, '#c084fc');
-            gradient.addColorStop(1, 'rgba(168, 85, 247, 0.2)');
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(player.x - beamWidth/2, 0, beamWidth, player.y - 10);
-            ctx.restore();
-            
-            // Mega Laser Collision execution check
-            entities.enemies.forEach((e) => {
-                if(Math.abs(e.x - player.x) < beamWidth/2 + e.size && e.y < player.y) {
-                    e.hp = 0; // Destroy immediately
-                }
-            });
-            if(entities.activeBoss) {
-                if(Math.abs(entities.activeBoss.x - player.x) < beamWidth/2 + entities.activeBoss.size) {
-                    entities.activeBoss.hp -= 0.4;
-                }
+    });
+
+    // Filter Out Smashed Enemies & Distribute Level XP Scores
+    for(let i=monsters.length-1; i>=0; i--) {
+        if(monsters[i].hp <= 0) {
+            engine.score += 100; engine.xp += 40;
+            if(engine.xp >= engine.nextXp) {
+                engine.level++; engine.xp = 0; hero.maxHp = Math.min(6, hero.maxHp + 1); hero.hp = hero.maxHp;
+                AudioEngine.synth(880, 0.4, 0.15, 'sine', 1500);
             }
-        }
-        
-        drawPlayer(player.x, player.y, player.radius);
-        
-        // Handle Enemies Spawning Metrics
-        if (!entities.activeBoss && state.frame % Math.max(20, 50 - state.level * 4) === 0) {
-            entities.enemies.push({
-                x: Math.random() * (canvas.width - 40) + 20, y: -20,
-                size: 12 + Math.random() * 6,
-                speed: 1.8 + Math.random() * 1.5 + (state.level * 0.3),
-                hp: 1
-            });
-        }
-        
-        // Boss Spawn Activation Blueprint
-        if (state.score > 0 && state.score % 20 === 0 && !entities.activeBoss) {
-            entities.enemies = [];
-            entities.activeBoss = {
-                x: canvas.width / 2, y: -50, targetX: canvas.width / 2, targetY: 120,
-                size: 32, hp: 25 + state.level * 10, maxHp: 25 + state.level * 10
-            };
-            document.getElementById('bossBarHost').style.display = 'block';
-        }
-        
-        // Render & Track Enemies Execution
-        for (let i = entities.enemies.length - 1; i >= 0; i--) {
-            let e = entities.enemies[i];
-            e.y += e.speed;
-            drawEnemy(e.x, e.y, e.size, false);
-            
-            if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.size) triggerGameOver();
-            
-            if (e.hp <= 0 || e.y > canvas.height + 30) {
-                if(e.hp <= 0) { state.score++; spawnExplosion(e.x, e.y, '#818cf8'); }
-                entities.enemies.splice(i, 1);
-            }
-        }
-        
-        // Render & Track Active Boss System
-        if (entities.activeBoss) {
-            let b = entities.activeBoss;
-            b.x += (b.targetX - b.x) * 0.03;
-            b.y += (b.targetY - b.y) * 0.03;
-            if (state.frame % 100 === 0) {
-                b.targetX = Math.random() * (canvas.width - 100) + 50;
-                b.targetY = Math.random() * 120 + 60;
-            }
-            drawEnemy(b.x, b.y, b.size, true);
-            document.getElementById('bossBar').style.width = `${(b.hp / b.maxHp) * 100}%`;
-            
-            if(state.frame % 50 === 0) {
-                entities.enemies.push({ x: b.x, y: b.y + 15, size: 9, speed: 4.5, hp: 1 });
-            }
-            
-            if (Math.hypot(player.x - b.x, player.y - b.y) < player.radius + b.size) triggerGameOver();
-            
-            if (b.hp <= 0) {
-                spawnExplosion(b.x, b.y, '#ef4444', 25);
-                entities.activeBoss = null;
-                document.getElementById('bossBarHost').style.display = 'none';
-                state.level++;
-                state.score += 15;
-            }
-        }
-        
-        // Render Projectiles Engine
-        for (let i = entities.lasers.length - 1; i >= 0; i--) {
-            let l = entities.lasers[i];
-            l.y += l.vy;
-            ctx.fillStyle = '#a78bfa';
-            ctx.fillRect(l.x - l.w/2, l.y, l.w, l.h);
-            
-            for(let j = entities.enemies.length - 1; j >= 0; j--) {
-                let e = entities.enemies[j];
-                if(Math.hypot(l.x - e.x, l.y - e.y) < e.size + 4) {
-                    e.hp--;
-                    entities.lasers.splice(i, 1);
-                    break;
-                }
-            }
-            
-            if(entities.activeBoss && entities.lasers[i]) {
-                let b = entities.activeBoss;
-                if(Math.hypot(l.x - b.x, l.y - b.y) < b.size + 4) {
-                    b.hp--;
-                    entities.lasers.splice(i, 1);
-                }
-            }
-            if(l && l.y < -25) entities.lasers.splice(i, 1);
-        }
-        
-        // Update Particle Simulations
-        for(let i = entities.particles.length - 1; i >= 0; i--) {
-            let p = entities.particles[i];
-            p.x += p.vx; p.y += p.vy;
-            p.alpha -= 0.03;
-            ctx.fillStyle = p.color;
-            ctx.globalAlpha = Math.max(0, p.alpha);
-            ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
-            ctx.globalAlpha = 1.0;
-            if(p.alpha <= 0) entities.particles.splice(i, 1);
+            monsters.splice(i,1);
         }
     }
+
+    // Check Interaction Proximity to Healing Shrines
+    healingShrines.forEach(s => {
+        s.pulse += 0.05;
+        if(hero.x < s.x + s.w + 20 && hero.x + hero.w > s.x - 20 && hero.y < s.y + s.h && hero.y + hero.h > s.y) {
+            if(hero.hp < hero.maxHp || hero.mp < hero.maxMp) {
+                hero.hp = hero.maxHp; hero.mp = hero.maxMp;
+                spawnParticleBurst(s.x + s.w/2, s.y + s.h/2, '#34d399', 4, 3);
+                if(Math.random() < 0.05) AudioEngine.synth(784, 0.1, 0.02, 'sine');
+            }
+        }
+    });
+
+    // Omega Boss Brain Combat Logic
+    if(masterBoss.hp > 0 && hero.x > 2100) {
+        masterBoss.attackClock++;
+        
+        // Execute projectile fire sequence loop cycles
+        if(masterBoss.attackClock > 90) {
+            fieldProjectiles.push({
+                x: masterBoss.x, y: masterBoss.y + 30, vx: -5.5, vy: (Math.random() - 0.5) * 3,
+                w: 14, h: 14, dmg: 1, variant: 'darkshadow'
+            });
+            AudioEngine.synth(150, 0.2, 0.06, 'sawtooth', 80);
+            masterBoss.attackClock = 0;
+        }
+        
+        // Random boss teleport evasions
+        if(Math.random() < 0.004) {
+            masterBoss.x = 2400 + Math.random() * 650;
+            spawnParticleBurst(masterBoss.x+25, masterBoss.y+45, '#c084fc', 20, 5);
+        }
+    }
+
+    // Process Active Flying Projectiles Arrays
+    for(let i = fieldProjectiles.length - 1; i >= 0; i--) {
+        let p = fieldProjectiles[i];
+        p.x += p.vx; if(p.vy) p.y += p.vy;
+        
+        if(p.variant === 'bolt' || p.variant === 'bomb') {
+            // Check Projectile Impact Over Enemy Arrays
+            monsters.forEach(m => {
+                if(p.x < m.x + m.w && p.x + p.w > m.x && p.y < m.y + m.h && p.y + p.h > m.y) {
+                    m.hp -= p.dmg;
+                    spawnParticleBurst(p.x, p.y, '#60a5fa', p.variant === 'bomb' ? 24 : 8);
+                    if(p.variant === 'bomb') camera.shake = 15;
+                    fieldProjectiles.splice(i, 1);
+                }
+            });
+            
+            // Check Projectile Hits Over Boss Shield Core
+            if(masterBoss.hp > 0 && fieldProjectiles[i] && p.x < masterBoss.x + masterBoss.w && p.x + p.w > masterBoss.x && p.y < masterBoss.y + masterBoss.h && p.y + p.h > masterBoss.y) {
+                masterBoss.hp -= p.dmg;
+                spawnParticleBurst(p.x, p.y, '#60a5fa', p.variant === 'bomb' ? 25 : 8);
+                fieldProjectiles.splice(i, 1);
+            }
+        } else if(p.variant === 'darkshadow') {
+            // Dark Shadow projectile collision vs hero player
+            if(hero.hitFlash <= 0 && p.x < hero.x + hero.w && p.x + p.w > hero.x && p.y < hero.y + p.h && p.y + p.h > hero.y) {
+                hero.hp--; hero.hitFlash = 40; camera.shake = 10;
+                fieldProjectiles.splice(i, 1);
+                AudioEngine.synth(100, 0.3, 0.1, 'sawtooth');
+            }
+        }
+
+        // Clean out bounds projectiles
+        if(p && (p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50)) fieldProjectiles.splice(i, 1);
+    }
+
+    // Handle Particle Lifecycles Fades
+    for(let i = clusterParticles.length - 1; i >= 0; i--) {
+        let pt = clusterParticles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.alpha -= 0.035;
+        if(pt.alpha <= 0) clusterParticles.splice(i, 1);
+    }
+
+    // Monitor engine loss thresholds pa
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Swordigo: The Aether Chronicles</title>
+    <style>
+        * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #020617; overflow: hidden; font-family: 'Courier New', Courier, monospace; position: fixed; }
+        #gameContainer { position: relative; width: 100%; max-width: 450px; height: 100%; max-height: 850px; margin: 0 auto; background: #090d16; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.9); border: 2px solid #1e293b; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* Premium Authentic HUD */
+        .hud-layer { position: absolute; top: env(safe-area-inset-top, 15px); left: 15px; right: 15px; pointer-events: none; display: flex; justify-content: space-between; z-index: 10; }
+        .vitals { display: flex; flex-direction: column; gap: 5px; background: rgba(9, 13, 22, 0.75); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .hearts-row { display: flex; gap: 3px; font-size: 16px; }
+        .mana-bar-container { width: 90px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .mana-bar-fill { width: 100%; height: 100%; background: #3b82f6; transition: width 0.1s; }
+        .spell-badge { width: 44px; height: 44px; background: rgba(15, 23, 42, 0.9); border: 2px solid #eab308; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; pointer-events: auto; box-shadow: 0 0 10px rgba(234, 179, 8, 0.3); }
+
+        /* Tactical Control Layout */
+        .controller-layer { position: absolute; bottom: calc(env(safe-area-inset-bottom, 20px) + 15px); left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; z-index: 10; pointer-events: none; }
+        .dpad, .action-cluster { display: flex; gap: 14px; pointer-events: auto; align-items: center; }
+        .control-btn { width: 66px; height: 66px; background: linear-gradient(135deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95)); border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; color: #f1f5f9; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4); text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .control-btn:active { background: #334155; transform: scale(0.92); border-color: #64748b; }
+        .btn-action-magic { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); color: #93c5fd; }
+        .btn-action-slash { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); color: #fca5a5; width: 72px; height: 72px; font-size: 28px; }
+
+        /* Game Over / Welcome Overlay */
+        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1e1b4b 0%, #020617 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; color: white; text-align: center; padding: 25px; }
+        .game-title { font-size: 34px; font-weight: 900; letter-spacing: 1px; color: #f59e0b; text-shadow: 0 4px 8px rgba(0,0,0,0.7); font-family: 'Georgia', serif; }
+        .action-start-btn { margin-top: 30px; background: linear-gradient(180deg, #f59e0b, #d97706); border: 2px solid #fef08a; padding: 16px 45px; border-radius: 6px; font-weight: 900; font-size: 16px; letter-spacing: 1px; box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5); text-shadow: 0 1px 2px rgba(0,0,0,0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
     
-    requestAnimationFrame(coreLoop);
+    <div class="hud-layer">
+        <div class="vitals">
+            <div class="hearts-row" id="heartsDisplay">❤️❤️❤️</div>
+            <div class="mana-bar-container"><div class="mana-bar-fill" id="manaBar"></div></div>
+            <div style="color: #94a3b8; font-size: 10px; font-weight: bold;" id="xpDisplay">LVL 1 - XP 0%</div>
+        </div>
+        <!-- Active Spell Toggle Slot -->
+        <div class="spell-badge" id="btnSpellSwap">🔮</div>
+    </div>
+
+    <div class="controller-layer">
+        <div class="dpad">
+            <div class="control-btn" id="ctrlLeft">◀</div>
+            <div class="control-btn" id="ctrlRight">▶</div>
+        </div>
+        <div class="action-cluster">
+            <div class="control-btn btn-action-magic" id="ctrlMagic">✨</div>
+            <div class="control-btn btn-action-slash" id="ctrlAttack">⚔️</div>
+        </div>
+    </div>
+
+    <div class="screen-overlay" id="mainScreenOverlay">
+        <div class="game-title">SWORDIGO</div>
+        <div style="font-size:10px; color:#a5b4fc; letter-spacing:5px; margin-top:5px;">THE AETHER REIGN</div>
+        <div style="font-size:12px; color:#94a3b8; margin-top:25px; max-width:300px; line-height:1.6; font-family:sans-serif;">Master tactical platforming, swap unique elemental spells, cleanse healing shrines, and eliminate the Corrupted Core.</div>
+        <button class="action-start-btn" id="startAdventureTrigger">ENTER THE REALM</button>
+    </div>
+</div>
+
+<script>
+// --- AUDIO ENGINE ---
+const AudioEngine = {
+    ctx: null, active: false, loopId: null, tick: 0,
+    init() { if(this.ctx) return; const AC = window.AudioContext||window.webkitAudioContext; this.ctx = new AC(); },
+    synth(freq, duration, vol, wave='sine', slide=0) {
+        if(!this.ctx || !this.active) return;
+        try {
+            let o = this.ctx.createOscillator(), g = this.ctx.createGain();
+            o.type = wave; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            if(slide > 0) o.frequency.exponentialRampToValueAtTime(slide, this.ctx.currentTime + duration);
+            g.gain.setValueAtTime(0, this.ctx.currentTime);
+            g.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+            o.connect(g); g.connect(this.ctx.destination);
+            o.start(); o.stop(this.ctx.currentTime + duration);
+        } catch(e){}
+    },
+    startMusic() {
+        this.init(); this.active = true; if(this.ctx.state==='suspended') this.ctx.resume();
+        const score = [220, 261, 329, 293, 261, 196, 220, 220]; 
+        this.loopId = setInterval(() => {
+            if(this.tick % 4 === 0) this.synth(score[this.tick % score.length], 0.8, 0.03, 'triangle');
+            if(this.tick % 8 === 2) this.synth(score[(this.tick + 2) % score.length] * 1.5, 0.4, 0.015, 'sine');
+            this.tick++;
+        }, 400);
+    },
+    stop() { clearInterval(this.loopId); this.active = false; }
+};
+
+// --- GAME CONFIG & SYSTEM SETUP ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('gameContainer');
+
+function resizeCanvas() {
+    canvas.width = container.clientWidth || window.innerWidth;
+    canvas.height = container.clientHeight || window.innerHeight;
 }
-coreLoop();
+resizeCanvas();
+
+const world = { width: 3200, groundY: canvas.height - 110 };
+const camera = { x: 0, shake: 0 };
+const engine = { active: false, score: 0, level: 1, xp: 0, nextXp: 100 };
+
+// --- HERO STATE MANAGEMENT ---
+const hero = {
+    x: 150, y: world.groundY - 60, w: 24, h: 42, vx: 0, vy: 0,
+    hp: 3, maxHp: 3, mp: 100, maxMp: 100,
+    airborne: true, orientation: 'right', attackTime: 0,
+    spellSelection: 'bolt', spellCooldown: 0, hitFlash: 0
+};
+
+// --- WORLD ASSETS: PLATFORMS, SHRINES, ENEMIES ---
+const mapPlatforms = [
+    { x: 0, y: world.groundY, w: 750, h: 120, type: 'grass' },
+    { x: 300, y: world.groundY - 80, w: 160, h: 24, type: 'stone' },
+    { x: 550, y: world.groundY - 160, w: 140, h: 24, type: 'stone' },
+    { x: 880, y: world.groundY, w: 800, h: 120, type: 'grass' },
+    { x: 1000, y: world.groundY - 90, w: 200, h: 24, type: 'stone' },
+    { x: 1320, y: world.groundY - 180, w: 160, h: 24, type: 'stone' },
+    { x: 1800, y: world.groundY, w: 1400, h: 120, type: 'dungeon' } // Final Boss Sanctuary Arena
+];
+
+const healingShrines = [
+    { x: 1100, y: world.groundY - 130, w: 35, h: 40, pulse: 0, active: true }
+];
+
+let monsters = [
+    { id: 1, x: 400, y: world.groundY - 30, w: 28, h: 28, mode: 'crawl', vx: 1.6, minX: 300, maxX: 680, hp: 2, maxHp: 2, color: '#818cf8' },
+    { id: 2, x: 1050, y: world.groundY - 122, w: 26, h: 26, mode: 'crawl', vx: 1.2, minX: 1010, maxX: 1180, hp: 2, maxHp: 2, color: '#c084fc' },
+    { id: 3, x: 1400, y: world.groundY - 30, w: 32, h: 32, mode: 'crawl', vx: 2.2, minX: 950, maxX: 1550, hp: 3, maxHp: 3, color: '#f43f5e' },
+    { id: 4, x: 2100, y: world.groundY - 30, w: 30, h: 30, mode: 'crawl', vx: 1.8, minX: 1850, maxX: 2300, hp: 3, maxHp: 3, color: '#818cf8' }
+];
+
+let masterBoss = {
+    x: 2750, y: world.groundY - 90, w: 55, h: 90, hp: 25, maxHp: 25,
+    attackClock: 0, phase: 'idle', stateTimer: 0
+};
+
+let fieldProjectiles = [];
+let clusterParticles = [];
+const activeInputs = { left: false, right: false };
+
+// --- BUTTON DRIVERS & SCRIPT LINX ---
+function registerInput(elementId, beginCallback, finishCallback) {
+    const btn = document.getElementById(elementId);
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); beginCallback(); }, {passive:false});
+    if(finishCallback) btn.addEventListener('touchend', (e) => { e.preventDefault(); finishCallback(); }, {passive:false});
+}
+
+registerInput('ctrlLeft', () => { activeInputs.left = true; hero.orientation = 'left'; }, () => activeInputs.left = false);
+registerInput('ctrlRight', () => { activeInputs.right = true; hero.orientation = 'right'; }, () => activeInputs.right = false);
+
+registerInput('ctrlAttack', () => {
+    if (!hero.airborne && Math.abs(hero.vx) < 0.5) {
+        // High physics jump command arc
+        hero.vy = -13.2; hero.airborne = true;
+        AudioEngine.synth(290, 0.15, 0.05, 'triangle', 450);
+    } else if (hero.attackTime === 0) {
+        // Primary Sword Swing Weapon Event
+        hero.attackTime = 14;
+        AudioEngine.synth(520, 0.1, 0.08, 'sawtooth', 850);
+        evaluateSwordSlashes();
+    }
+});
+
+registerInput('ctrlMagic', () => {
+    if (hero.spellCooldown <= 0) {
+        if(hero.spellSelection === 'bolt' && hero.mp >= 20) {
+            hero.mp -= 20; hero.spellCooldown = 22;
+            fieldProjectiles.push({
+                x: hero.orientation === 'right' ? hero.x + hero.w : hero.x - 16,
+                y: hero.y + 14, vx: hero.orientation === 'right' ? 8.5 : -8.5,
+                w: 16, h: 8, dmg: 1, variant: 'bolt'
+            });
+            AudioEngine.synth(650, 0.2, 0.05, 'sine', 1200);
+        } else if(hero.spellSelection === 'bomb' && hero.mp >= 40) {
+            hero.mp -= 40; hero.spellCooldown = 45;
+            fieldProjectiles.push({
+                x: hero.orientation === 'right' ? hero.x + hero.w : hero.x - 18,
+                y: hero.y + 8, vx: hero.orientation === 'right' ? 5 : -5,
+                vy: -4, w: 18, h: 18, dmg: 3, variant: 'bomb'
+            });
+            AudioEngine.synth(300, 0.25, 0.06, 'triangle', 100);
+        }
+    }
+});
+
+document.getElementById('btnSpellSwap').addEventListener('click', () => {
+    hero.spellSelection = hero.spellSelection === 'bolt' ? 'bomb' : 'bolt';
+    document.getElementById('btnSpellSwap').innerText = hero.spellSelection === 'bolt' ? '🔮' : '💥';
+    AudioEngine.synth(440, 0.08, 0.04, 'sine');
+});
+
+document.getElementById('startAdventureTrigger').addEventListener('click', () => {
+    document.getElementById('mainScreenOverlay').style.display = 'none';
+    compileEngineReset();
+    engine.active = true;
+    AudioEngine.startMusic();
+});
+
+function compileEngineReset() {
+    hero.hp = 3; hero.maxHp = 3; hero.mp = 100; hero.x = 150; hero.y = world.groundY - 100; hero.vx = 0; hero.vy = 0;
+    engine.score = 0; engine.level = 1; engine.xp = 0; masterBoss.hp = 25;
+    monsters.forEach(m => m.hp = m.maxHp); fieldProjectiles = []; clusterParticles = [];
+}
+
+function spawnParticleBurst(x, y, color, density=8, power=4) {
+    for(let i=0; i<density; i++) {
+        clusterParticles.push({
+            x: x, y: y, vx: (Math.random() - 0.5) * power, vy: (Math.random() - 0.5) * power,
+            size: Math.random() * 3.5 + 1, alpha: 1, color: color
+        });
+    }
+}
+
+// --- ENGINE CALCULATION COMPUTATIONS ---
+function evaluateSwordSlashes() {
+    let reach = 42;
+    let attackZoneX = hero.orientation === 'right' ? hero.x + hero.w : hero.x - reach;
+    let attackZoneY = hero.y - 5;
+    
+    monsters.forEach(m => {
+        if(attackZoneX < m.x + m.w && attackZoneX + reach > m.x && attackZoneY < m.y + m.h && attackZoneY + hero.h + 10 > m.y) {
+            m.hp--;
+            camera.shake = 10; // Instantly trigger screen impact mechanics
+            spawnParticleBurst(m.x + m.w/2, m.y + m.h/2, '#ef4444', 12);
+            m.x += hero.orientation === 'right' ? 15 : -15; // Knockback processing
+            AudioEngine.synth(180, 0.12, 0.1, 'sawtooth');
+        }
+    });
+
+    // Check Boss Damage Collider
+    if(masterBoss.hp > 0 && attackZoneX < masterBoss.x + masterBoss.w && attackZoneX + reach > masterBoss.x && attackZoneY < masterBoss.y + masterBoss.h && attackZoneY + hero.h + 10 > masterBoss.y) {
+        masterBoss.hp--; camera.shake = 14;
+        spawnParticleBurst(masterBoss.x + masterBoss.w/2, masterBoss.y + masterBoss.h/2, '#fbbf24', 15, 6);
+        masterBoss.x += hero.orientation === 'right' ? 8 : -8;
+        if(masterBoss.hp <= 0) awardEpicVictory();
+    }
+}
+
+function awardEpicVictory() {
+    spawnParticleBurst(masterBoss.x + 25, masterBoss.y + 45, '#fbbf24', 60, 10);
+    setTimeout(() => {
+        engine.active = false; AudioEngine.stop();
+        document.getElementById('mainScreenOverlay').style.display = 'flex';
+        document.querySelector('.game-title').innerText = "VICTORY ACHIEVED";
+        document.querySelector('.action-start-btn').innerText = "AWAKEN AGAIN";
+    }, 2000);
+}
+
+function handlePhysicsEngine() {
+    // Left/Right Movement Speed Math
+    if(activeInputs.left) hero.vx = -4.2;
+    else if(activeInputs.right) hero.vx = 4.2;
+    else hero.vx *= 0.72;
+
+    hero.vy += 0.58; // Gravity scalar acceleration
+    hero.x += hero.vx; hero.y += hero.vy;
+
+    if (hero.x < 0) hero.x = 0;
+    if (hero.x > world.width - hero.w) hero.x = world.width - hero.w;
+
+    // Rigid Platform Intersections Logic
+    hero.airborne = true;
+    mapPlatforms.forEach(p => {
+        if(hero.x < p.x + p.w && hero.x + hero.w > p.x &&
+           hero.y + hero.h > p.y && hero.y + hero.h - hero.vy <= p.y + 8) {
+            hero.y = p.y - hero.h; hero.vy = 0; hero.airborne = false;
+        }
+    });
+
+    // Pitfall hazard bounds check
+    if(hero.y > canvas.height + 50) { hero.hp = 0; }
+    
+    // Naturally regenerate minimal mana ticks over time
+    if(hero.mp < hero.maxMp && Math.random() < 0.15) hero.mp += 1;
+
+    if(hero.spellCooldown > 0) hero.spellCooldown--;
+    if(hero.attackTime > 0) hero.attackTime--;
+    if(hero.hitFlash > 0) hero.hitFlash--;
+
+    // High Dynamic Camera Frame Lock Tracking
+    camera.x = hero.x - canvas.width / 2;
+    if (camera.x < 0) camera.x = 0;
+    if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
+    
+    // Apply camera dampening filters
+    if(camera.shake > 0) camera.shake *= 0.85;
+}
+
+function updateWorldEntities() {
+    // Control Patrol Monsters AI Loop
+    monsters.forEach(m => {
+        m.x += m.vx;
+        if(m.x < m.minX || m.x > m.maxX) m.vx *= -1;
+
+        // Collision Check Against Hero Profile
+        if(hero.hitFlash <= 0 && hero.x < m.x + m.w && hero.x + hero.w > m.x && hero.y < m.y + m.h && hero.y + hero.h > m.y) {
+            hero.hp--; hero.hitFlash = 45;
+            hero.vx = m.vx * 3; hero.vy = -4; // Launch knockback damage physics vector
+            camera.shake = 12;
+            AudioEngine.synth(120, 0.25, 0.12, 'sawtooth');
+        }
+    });
+
+    // Filter Out Smashed Enemies & Distribute Level XP Scores
+    for(let i=monsters.length-1; i>=0; i--) {
+        if(monsters[i].hp <= 0) {
+            engine.score += 100; engine.xp += 40;
+            if(engine.xp >= engine.nextXp) {
+                engine.level++; engine.xp = 0; hero.maxHp = Math.min(6, hero.maxHp + 1); hero.hp = hero.maxHp;
+                AudioEngine.synth(880, 0.4, 0.15, 'sine', 1500);
+            }
+            monsters.splice(i,1);
+        }
+    }
+
+    // Check Interaction Proximity to Healing Shrines
+    healingShrines.forEach(s => {
+        s.pulse += 0.05;
+        if(hero.x < s.x + s.w + 20 && hero.x + hero.w > s.x - 20 && hero.y < s.y + s.h && hero.y + hero.h > s.y) {
+            if(hero.hp < hero.maxHp || hero.mp < hero.maxMp) {
+                hero.hp = hero.maxHp; hero.mp = hero.maxMp;
+                spawnParticleBurst(s.x + s.w/2, s.y + s.h/2, '#34d399', 4, 3);
+                if(Math.random() < 0.05) AudioEngine.synth(784, 0.1, 0.02, 'sine');
+            }
+        }
+    });
+
+    // Omega Boss Brain Combat Logic
+    if(masterBoss.hp > 0 && hero.x > 2100) {
+        masterBoss.attackClock++;
+        
+        // Execute projectile fire sequence loop cycles
+        if(masterBoss.attackClock > 90) {
+            fieldProjectiles.push({
+                x: masterBoss.x, y: masterBoss.y + 30, vx: -5.5, vy: (Math.random() - 0.5) * 3,
+                w: 14, h: 14, dmg: 1, variant: 'darkshadow'
+            });
+            AudioEngine.synth(150, 0.2, 0.06, 'sawtooth', 80);
+            masterBoss.attackClock = 0;
+        }
+        
+        // Random boss teleport evasions
+        if(Math.random() < 0.004) {
+            masterBoss.x = 2400 + Math.random() * 650;
+            spawnParticleBurst(masterBoss.x+25, masterBoss.y+45, '#c084fc', 20, 5);
+        }
+    }
+
+    // Process Active Flying Projectiles Arrays
+    for(let i = fieldProjectiles.length - 1; i >= 0; i--) {
+        let p = fieldProjectiles[i];
+        p.x += p.vx; if(p.vy) p.y += p.vy;
+        
+        if(p.variant === 'bolt' || p.variant === 'bomb') {
+            // Check Projectile Impact Over Enemy Arrays
+            monsters.forEach(m => {
+                if(p.x < m.x + m.w && p.x + p.w > m.x && p.y < m.y + m.h && p.y + p.h > m.y) {
+                    m.hp -= p.dmg;
+                    spawnParticleBurst(p.x, p.y, '#60a5fa', p.variant === 'bomb' ? 24 : 8);
+                    if(p.variant === 'bomb') camera.shake = 15;
+                    fieldProjectiles.splice(i, 1);
+                }
+            });
+            
+            // Check Projectile Hits Over Boss Shield Core
+            if(masterBoss.hp > 0 && fieldProjectiles[i] && p.x < masterBoss.x + masterBoss.w && p.x + p.w > masterBoss.x && p.y < masterBoss.y + masterBoss.h && p.y + p.h > masterBoss.y) {
+                masterBoss.hp -= p.dmg;
+                spawnParticleBurst(p.x, p.y, '#60a5fa', p.variant === 'bomb' ? 25 : 8);
+                fieldProjectiles.splice(i, 1);
+            }
+        } else if(p.variant === 'darkshadow') {
+            // Dark Shadow projectile collision vs hero player
+            if(hero.hitFlash <= 0 && p.x < hero.x + hero.w && p.x + p.w > hero.x && p.y < hero.y + p.h && p.y + p.h > hero.y) {
+                hero.hp--; hero.hitFlash = 40; camera.shake = 10;
+                fieldProjectiles.splice(i, 1);
+                AudioEngine.synth(100, 0.3, 0.1, 'sawtooth');
+            }
+        }
+
+        // Clean out bounds projectiles
+        if(p && (p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50)) fieldProjectiles.splice(i, 1);
+    }
+
+    // Handle Particle Lifecycles Fades
+    for(let i = clusterParticles.length - 1; i >= 0; i--) {
+        let pt = clusterParticles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.alpha -= 0.035;
+        if(pt.alpha <= 0) clusterParticles.splice(i, 1);
+    }
+
+    // Monitor engine loss thresholds parameters
+    if(hero.hp <= 0) {
+        engine.active = false; AudioEngine.stop();
+        document.getElementById('mainScreenOverlay').style.display = 'flex';
+        document.querySelector('.game-title').innerText = "HERO FALLEN";
+        document.querySelector('.action-start-btn').innerText = "RESPAWN";
+    }
+}
+
+// --- WORLD PROCEDURAL DRAW ENGINE ---
+function executionRenderLoop() {
+    // Draw Sky Background gradient structure
+    let skyGrad = ctx.createLinearGradient(0,0,0,canvas.height);
+    skyGrad.addColorStop(0, '#020617'); skyGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    // Compute Camera Translations with dynamic Screenshake matrix filters
+    let curShakeX = (Math.random() - 0.5) * camera.shake;
+    let curShakeY = (Math.random() - 0.5) * camera.shake;
+    ctx.translate(-camera.x + curShakeX, curShakeY);
+
+    // Draw Parallax Mountains silhouettes far away background lines
+    ctx.fillStyle = '#1e1b4b';
+    for(let i=0; i<4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i*900, world.groundY); ctx.lineTo(i*900+450, world.groundY-250); ctx.lineTo(i*900+900, world.groundY);
+        ctx.fill();
+    }
+
+    // Render Procedural Platforms blocks
+    mapPlatforms.forEach(p => {
+        if(p.type === 'grass' || p.type === 'dungeon') {
+            ctx.fillStyle = p.type === 'grass' ? '#064e3b' : '#312e81';
+            ctx.fillRect(p.x, p.y, p.w, p.h);
+            
+            // Render brick pattern grid accents procedurally
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 2;
+            for(let bx = p.x; bx < p.x + p.w; bx += 30) {
+                ctx.strokeRect(bx, p.y, 30, 40);
+            }
+            
+            // Draw premium bright grass lining tracks top caps
+            ctx.fillStyle = p.type === 'grass' ? '#10b981' : '#4f46e5';
+            ctx.fillRect(p.x, p.y, p.w, 8);
+        } else {
+            // Floating Stone Ledges rendering engine
+            ctx.fillStyle = '#334155'; ctx.fillRect(p.x, p.y, p.w, p.h);
+            ctx.fillStyle = '#475569'; ctx.fillRect(p.x, p.y, p.w, 4);
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            for(let sx = p.x + 20; sx < p.x + p.w; sx += 20) {
+                ctx.beginPath(); ctx.moveTo(sx, p.y); ctx.lineTo(sx, p.y + p.h); ctx.stroke();
+            }
+        }
+    });
+
+    // Draw Ancient Healing Shrines Checkpoints
+    healingShrines.forEach(s => {
+        ctx.fillStyle = '#64748b'; ctx.fillRect(s.x, s.y, s.w, s.h); // Base stone block pillar
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(s.x + 4, s.y - 12, s.w - 8, 12);
+        
+        // Draw the floating pulsing power magical gemstone orb core asset
+        let orbPulseY = s.y - 28 + Math.sin(s.pulse) * 4;
+        let orbGrad = ctx.createRadialGradient(s.x+s.w/2, orbPulseY, 2, s.x+s.w/2, orbPulseY, 12);
+        orbGrad.addColorStop(0, '#67e8f9'); orbGrad.addColorStop(1, 'rgba(6,182,212,0)');
+        ctx.fillStyle = orbGrad; ctx.beginPath(); ctx.arc(s.x+s.w/2, orbPulseY, 12, 0, Math.PI*2); ctx.fill();
+    });
+
+    // Render Hero Sprite Avatar geometry sets blocks
+    if (hero.hitFlash % 4 < 2) {
+        ctx.fillStyle = '#4f46e5'; ctx.fillRect(hero.x, hero.y, hero.w, hero.h); // Robe tunic layer
+        ctx.fillStyle = '#fca5a5'; ctx.fillRect(hero.x + 3, hero.y + 4, hero.w - 6, 10); // Skin head mask
+        ctx.fillStyle = '#fbbf24'; ctx.fillRect(hero.x - 2, hero.y - 3, hero.w + 4, 6); // Golden Crown/Hair profile line
+        
+        // Render Active Sword Slash sweeps arcs overlays visuals
+        if(hero.attackTime > 0) {
+            ctx.fillStyle = 'rgba(254, 240, 138, 0.85)';
+            if(hero.orientation === 'right') ctx.fillRect(hero.x + hero.w, hero.y + 10, 32, 14);
+            else ctx.fillRect(hero.x - 32, hero.y + 10, 32, 14);
+        }
+    }
+
+    // Render Monsters list profiles
+    monsters.forEach(m => {
+        ctx.fillStyle = m.color; ctx.fillRect(m.x, m.y, m.w, m.h);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(m.x + (m.vx > 0 ? m.w - 10 : 4), m.y + 5, 5, 5); // Glow eye tracking
+    });
+
+    // Render Dark Core Overlord Boss Sanctuary
+    if(masterBoss.hp > 0) {
+        ctx.fillStyle = '#1e1b4b'; ctx.fillRect(masterBoss.x, masterBoss.y, masterBoss.w, masterBoss.h);
+        ctx.fillStyle = '#6b21a8'; ctx.fillRect(masterBoss.x + 6, masterBoss.y + 6, masterBoss.w - 12, masterBoss.h - 12);
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(masterBoss.x + 12, masterBoss.y + 18, 8, 8); // Red demon eye accents
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(masterBoss.x + masterBoss.w - 20, masterBoss.y + 18, 8, 8);
+    }
+
+    // Draw active Projectiles arrays payloads on context map spaces
+    fieldProjectiles.forEach(p => {
+        if(p.variant === 'bolt') ctx.fillStyle = '#22d3ee';
+        else if(p.variant === 'bomb') ctx.fillStyle = '#f97316';
+        else ctx.fillStyle = '#a855f7';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+    });
+
+    // Draw engine interactive Particle systems layers elements lists
+    clusterParticles.forEach(pt => {
+        ctx.save(); ctx.globalAlpha = pt.alpha; ctx.fillStyle = pt.color;
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    });
+
+    ctx.restore();
+
+    // Map metrics numbers back straight to HTML HUD container text spaces elements
+    if(engine.active) {
+        let heartsStr = ''; for(let h=0; h<hero.maxHp; h++) heartsStr += (h < hero.hp) ? '❤️' : '🖤';
+        document.getElementById('heartsDisplay').innerText = heartsStr;
+        document.getElementById('manaBar').style.width = `${(hero.mp / hero.maxMp)*100}%`;
+        document.getElementById('xpDisplay').innerText = `LVL ${engine.level} CHAMPION - XP ${Math.floor((engine.xp/engine.nextXp)*100)}%`;
+    }
+}
+
+// --- MASTER LOOPER CONTROLLER Ticks ---
+function masterCoreExecutionTick() {
+    if(engine.active) {
+        handlePhysicsEngine();
+        updateWorldEntities();
+    }
+    executionRenderLoop();
+    requestAnimationFrame(masterCoreExecutionTick);
+}
+masterCoreExecutionTick();
 </script>
 </body>
 </html>
